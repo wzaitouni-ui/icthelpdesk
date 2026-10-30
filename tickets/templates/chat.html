@@ -4,163 +4,1878 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>ICT Helpdesk</title>
+    <title>ICT Helpdesk - Handpicked</title>
+    <meta name="description" content="Meld je ICT-probleem bij Handpicked. Een paar korte vragen en je melding staat direct bij de ICT-beheerder.">
+    <meta name="theme-color" content="#adff00">
+    {% verbatim %}
+    <script>
+        /* Thema meteen zetten, voor er iets geverfd wordt, zodat er geen flits
+           van het verkeerde thema is. Er zijn alleen neon en studio; zonder
+           (geldige) opgeslagen keuze -- ook een oude 'light'/'dark' -- is het
+           studio. Het attribuut staat dus altijd. */
+        (function () {
+            var t = 'studio';
+            try {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'neon' || saved === 'studio') { t = saved; }
+            } catch (e) { /* localStorage kan geblokkeerd zijn */ }
+            document.documentElement.setAttribute('data-theme', t);
+            /* Zet de vlag voor het binnenkomen bij scrollen nu al, voor de
+               eerste verf. Alleen als we het ook weer kunnen laten komen:
+               zonder IntersectionObserver zou de inhoud verborgen blijven. */
+            if ('IntersectionObserver' in window) {
+                document.documentElement.className += ' js-reveal';
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Gellix van handpickedagencies.com; de bestandsnamen veranderen soms bij een nieuwe build van die site. */
-        @font-face { font-family: 'Gellix'; src: url('https://www.handpickedagencies.com/_next/static/media/Gellix_Regular-s.p.3blxyezxqnc4u.woff2') format('woff2'); font-weight: 400; font-display: swap; }
-        @font-face { font-family: 'Gellix'; src: url('https://www.handpickedagencies.com/_next/static/media/Gellix_SemiBold-s.p.0kvgscy2y_wb2.woff2') format('woff2'); font-weight: 600; font-display: swap; }
-        @font-face { font-family: 'Gellix'; src: url('https://www.handpickedagencies.com/_next/static/media/Gellix_Bold-s.p.1d53qkh3e_jb7.woff2') format('woff2'); font-weight: 700; font-display: swap; }
-
+        /* Overgenomen van wifi.handpicked.nl, zodat beide sites er hetzelfde uitzien. */
+        /* Handpicked-huisstijl. Kleuren komen uit de design tokens van
+           handpickedagencies.com. Het merk gebruikt Gellix; die is niet vrij
+           beschikbaar, dus Plus Jakarta Sans staat er als naaste geometrische
+           sans voor. */
         :root {
-            --bg: #274548;
-            --bg-card: #1e3a3e;
-            --bg-card2: #243b3f;
-            --bg-input: #1a3235;
-            --accent: #adff00;
-            --on-accent: #0d2023;
-            --text: #ffffff;
-            --muted: #7a9ea6;
-            --label: #4a7a82;
-            --border: rgba(255,255,255,0.12);
+            --lime: #adff00;
+            --lime-dark: #97e000;
+            --ink: #0d2023;
+            --ink-soft: #274548;
+            --sand-bg: #f0ede2;
+            --sand-line: #e1dbc5;
+            /* Donkerder dan het merk-token #8f8769. Dat haalt op deze
+               achtergrond maar 3.07:1 en is daarmee te licht voor de kleine
+               tekst waar het hier voor gebruikt wordt (tabelkoppen, hints).
+               Deze variant zit op 4.78:1 en blijft in dezelfde olijftint. */
+            --sand-text: #6f6849;
+            --teal-100: #c7dbdc;
+            --teal-500: #9ac2c5;
+            --white: #ffffff;
+            /* Rol-tokens die per thema omklappen. --white en --ink blijven
+               letterlijk (voor de bewust donkere panelen: installatiecode en
+               logvensters); --surface pakt de vlakken en --text de tekst die
+               in donker mee moeten kantelen. */
+            --surface: #ffffff;
+            --text: #0d2023;
+            --grey-100: #ebebeb;
+            --grey-300: #bababa;
+            --grey-500: #959597;
+            --ok-100: #d9f2e3;
+            --ok-500: #00a841;
+            --warn-100: #fcf1cf;
+            --warn-500: #f2c84a;
+            --err-100: #ffe6e6;
+            --err-500: #ff2424;
+            --err-700: #bd0000;
+            /* Ruimere rondingen in de trant van apple.com: panelen 18, grote
+               vlakken 28, invoervelden 12. Knoppen gaan naar een volle pil. */
+            --r: 18px;
+            --r-sm: 12px;
+            --r-lg: 28px;
+            --r-pill: 980px;
+            /* Haarlijn voor scheidingen. Vervangt de zwaardere --sand-line op
+               plekken waar een rand alleen hoeft te suggereren, niet omlijnen. */
+            --hairline: rgba(13,32,35,.10);
+            /* Startkleur van de koppen; die draait continu de kleurencirkel
+               rond (zie .brand, h1, h2). Op de zandkleurige achtergrond van dit
+               thema moet hij donker zijn om leesbaar te blijven -- donkergroen
+               wordt donkerblauw, donkerpaars, donkerrood, en weer terug. */
+            --heading-tint: #0a5c39;
+            --maxw: 1440px;
+            /* Zachte, gelaagde schaduwen voor de premium-look. */
+            --shadow-sm: 0 1px 2px rgba(13,32,35,.06), 0 1px 3px rgba(13,32,35,.05);
+            --shadow-md: 0 6px 18px rgba(13,32,35,.08), 0 2px 6px rgba(13,32,35,.05);
+            --shadow-lg: 0 30px 70px rgba(13,32,35,.14), 0 10px 24px rgba(13,32,35,.08);
+            /* Doorschijnende achtergrond voor de glas-topbar. */
+            --surface-blur: rgba(255,255,255,.72);
+            /* Laptop-behuizing (geborsteld aluminium). */
+            --laptop-shell: linear-gradient(180deg, #f4f6f7 0%, #d6dde1 55%, #c2cbd0 100%);
+            --laptop-edge: #b3bdc2;
+            --laptop-hinge: #9aa5aa;
         }
 
-        * { box-sizing: border-box; }
-        html, body { margin: 0; }
-        body {
-            background: var(--bg);
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* De paginakleur staat op <html>, niet op <body>. Een ondoorzichtige
+           body-achtergrond wordt namelijk NA de lagen met een negatieve
+           z-index geverfd en zou de bewegende achtergrond eronder wegdekken. */
+        html, body {
+            min-height: 100%;
             color: var(--text);
-            font-family: 'Gellix', system-ui, -apple-system, 'Segoe UI', sans-serif;
-            font-size: 16px;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            font-size: 17px;
             line-height: 1.5;
-            min-height: 100vh;
+            /* Lichte negatieve letterafstand over de hele pagina; dat is wat
+               Apple-tekst zo compact laat ogen. Koppen krijgen verderop meer. */
+            letter-spacing: -.011em;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: geometricPrecision;
         }
-        button, input { font: inherit; color: inherit; }
+        html { background: var(--sand-bg); }
+        body { background: transparent; }
 
-        /* Header */
+        a { color: inherit; }
+
+        /* ---------- Bewegende achtergrond (lichtstrepen en stippen) ----------
+           Vaste laag achter alle inhoud (z-index -1), vult via preserveAspectRatio
+           "none" het HELE scherm (boven t/m onder, achter de hero en de knoppen).
+
+           Geen kruipende streepjes meer: elke baan loopt van ver buiten beeld
+           links tot ver buiten beeld rechts en er reist precies EEN ding
+           overheen -- een lange lichtstreep of een klein groepje stippen. Dat
+           regelt de dasharray: bij pathLength=100 telt de baan als 100, dus een
+           streep van 26 met een gat van 74 betekent er nooit meer dan een
+           tegelijk. De offset schuift precies een volle periode (100), dus het
+           ding loopt het scherm uit en de lus begint naadloos weer van voren
+           af aan -- eruit en weer terug. Snelheid en startpunt zitten per baan
+           in --t en --d, zodat niets in de pas loopt.
+           Bewust altijd aan (ook bij prefers-reduced-motion): de eigenaar wil
+           constante beweging over het hele scherm. */
+        .bg-lines { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+        .bg-lines svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+        .bg-lines path {
+            fill: none; stroke: url(#lg); stroke-linecap: round;
+            /* Het beeld wordt niet-uniform opgerekt (preserveAspectRatio="none").
+               Hiermee blijft de dikte in schermpixels, en dat is wat de stippen
+               rond houdt in plaats van ovaal op een breed scherm. */
+            vector-effect: non-scaling-stroke;
+            animation: sweep var(--t, 14s) linear infinite;
+            animation-delay: var(--d, 0s);
+        }
+        @keyframes sweep { to { stroke-dashoffset: -100; } }
+        @keyframes sweepR { to { stroke-dashoffset: 100; } }
+        .bg-lines .rev { animation-name: sweepR; }
+
+        /* ---------- Kleurverloop dat blijft doorlopen ----------
+           De strepen en stippen tekenen met het verloop #lg, en de drie
+           stoppunten daarvan draaien continu door het hele spectrum: groen,
+           cyaan, blauw, paars, roze, geel en weer terug.
+
+           Ze draaien dezelfde ronde maar beginnen elk een derde verderop, via
+           een negatieve animation-delay. Zonder die verschuiving zouden alle
+           drie tegelijk dezelfde kant op kleuren en was het verloop steeds een
+           egale vlek; nu bestaat het altijd uit drie verschillende kleuren. */
+        .bg-lines .gs { stop-color: #adff00; animation: spectrum 24s linear infinite; }
+        .bg-lines .gs2 { animation-delay: -8s; }
+        .bg-lines .gs3 { animation-delay: -16s; }
+        @keyframes spectrum {
+            0%   { stop-color: #adff00; }
+            14%  { stop-color: #00e6a4; }
+            28%  { stop-color: #00cfff; }
+            42%  { stop-color: #3d6dff; }
+            56%  { stop-color: #a24dff; }
+            70%  { stop-color: #ff4d94; }
+            84%  { stop-color: #ffc21c; }
+            100% { stop-color: #adff00; }
+        }
+
+        /* Een lichtstreep is twee paden over elkaar: een lange, vage staart en
+           een korte felle kop die er 19% van de baan voor uit loopt. Die
+           voorsprong komt uit een negatieve animation-delay: dezelfde animatie,
+           alleen eerder begonnen, dus permanent verder op de baan. Voor de
+           omgekeerde richting is -81% hetzelfde punt (de lus is periodiek),
+           maar dan aan de andere kant van de staart. */
+        /* Zachter dan eerst: de bloem is nu de achtergrond, de strepen en
+           stippen zijn het beweeglijke laagje daaroverheen. */
+        .bg-lines .tail { stroke-width: 2.5; stroke-dasharray: 26 74; opacity: .14; }
+        .bg-lines .head {
+            stroke-width: 3.5; stroke-dasharray: 7 93; opacity: .42;
+            animation-delay: calc(var(--d, 0s) - var(--t, 14s) * .19);
+            filter: drop-shadow(0 0 5px rgba(56,193,114,.4));
+        }
+        .bg-lines .rev.head { animation-delay: calc(var(--d, 0s) - var(--t, 14s) * .81); }
+
+        /* Stippen: streepjes van vrijwel niets, dus er blijven alleen de ronde
+           uiteinden over. Het gat bepaalt hoeveel er tegelijk op de baan staan. */
+        .bg-lines .dots { stroke-width: 7; stroke-dasharray: 0.1 24; opacity: .26; }
+        .bg-lines .dots-sm { stroke-width: 4.5; stroke-dasharray: 0.1 14; opacity: .16; }
+
+        /* Extra achtergrondlagen. Ze zitten bewust IN .bg-lines: dat is al een
+           eigen stapelcontext achter de inhoud, dus ze hoeven zelf niet met
+           z-index te vechten. De SVG staat er in DOM-volgorde achter en verft
+           dus bovenop deze twee.
+
+           De kleurwaas draait nu in ELK thema mee -- alleen zachter naarmate
+           het thema rustiger is. Het raster blijft bij neon horen. */
+        .bg-bloom, .bg-grid { position: absolute; pointer-events: none; }
+        .bg-grid { display: none; }
+        :root[data-theme="neon"] .bg-grid { display: block; }
+
+        /* ---------- De bloem ----------
+           Een grote zachte bloei van doorschijnende bladen die vanuit het
+           midden naar buiten waaieren, in de trant van een Windows-achtergrond.
+
+           Elk blad is niets meer dan EEN radiaal verloop in een langgerekt
+           vak: 'farthest-side at 0% 50%' legt het middelpunt van dat verloop op
+           de linkerrand, dus het blad is fel bij de kern en dooft naar de punt
+           en naar de zijkanten uit. Daardoor is er geen blur nodig -- de rand
+           is vanzelf al zacht, en dat scheelt de browser elke frame een
+           volledig scherm vervagen. Om diezelfde reden staat er ook geen
+           border-radius op: die zou juist een harde ovaal terugknippen.
+
+           Draaipunt op de kern, dus schalen laat een blad vanuit het hart
+           groeien in plaats van uit zijn eigen midden. */
+        .bg-bloom {
+            inset: 0;
+            opacity: .5;
+            animation: bloom-spin 150s linear infinite,
+                       bloom-hue 24s linear infinite;
+        }
+        .bg-bloom .bp {
+            position: absolute; left: 50%; top: 50%;
+            width: var(--w, 58vmax); height: var(--h, 16vmax);
+            margin-top: calc(var(--h, 16vmax) * -0.5);
+            transform-origin: 0 50%;
+            transform: rotate(var(--a, 0deg));
+            background: radial-gradient(farthest-side at 0% 50%,
+                var(--c1), var(--c2) 40%, transparent 82%);
+            animation: petal-breathe var(--t, 19s) ease-in-out infinite alternate;
+            animation-delay: var(--d, 0s);
+        }
+        .bg-bloom .c-blue   { --c1: rgba(185,218,255,.44); --c2: rgba(90,150,255,.20); }
+        .bg-bloom .c-violet { --c1: rgba(212,192,255,.40); --c2: rgba(140,90,255,.18); }
+        .bg-bloom .c-pink   { --c1: rgba(255,193,231,.36); --c2: rgba(255,80,180,.16); }
+        .bloom-core {
+            position: absolute; left: 50%; top: 50%;
+            width: 36vmax; height: 36vmax; margin: -18vmax 0 0 -18vmax;
+            background: radial-gradient(closest-side,
+                rgba(255,255,255,.46), rgba(196,218,255,.16) 46%, transparent 76%);
+            animation: petal-breathe 27s ease-in-out infinite alternate;
+        }
+        @keyframes bloom-spin { to { transform: rotate(360deg); } }
+        @keyframes petal-breathe {
+            from { transform: rotate(var(--a, 0deg)) scale(1); }
+            to   { transform: rotate(var(--a, 0deg)) scale(1.13); }
+        }
+        /* Een volle ronde door de kleurencirkel, op dezelfde 24 seconden als de
+           strepen en de koppen. Beide keyframes noemen de hele filterketen:
+           springt een filter van een naar twee functies, dan kan de browser er
+           niet tussenin rekenen en klapt de kleur ineens om. */
+        @keyframes bloom-hue {
+            from { filter: saturate(1.15) hue-rotate(0deg); }
+            to   { filter: saturate(1.15) hue-rotate(360deg); }
+        }
+        /* Licht is de rustigste stand, neon de felste. */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .bg-bloom { opacity: .72; }
+        }
+        :root[data-theme="dark"] .bg-bloom { opacity: .72; }
+        :root[data-theme="neon"] .bg-bloom { opacity: 1; }
+        /* Fijn raster dat traag wegdrijft: geeft diepte zonder de tekst te storen.
+           Het masker laat het naar de randen toe uitdoven. */
+        .bg-grid {
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(150,200,255,.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(150,200,255,.07) 1px, transparent 1px);
+            background-size: 46px 46px, 46px 46px;
+            -webkit-mask-image: radial-gradient(76% 66% at 50% 32%, #000 20%, transparent 100%);
+            mask-image: radial-gradient(76% 66% at 50% 32%, #000 20%, transparent 100%);
+            animation: grid-pan 20s linear infinite;
+        }
+        @keyframes grid-pan { to { background-position: 46px 46px, 46px 46px; } }
+
+        /* ---------- Confetti bij het openklappen van de laptop ---------- */
+        .confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 999; overflow: hidden; }
+        .confetti-piece {
+            position: absolute; top: -24px; border-radius: 2px; opacity: .95; will-change: transform;
+            animation-name: confetti-fall; animation-timing-function: cubic-bezier(.15,.5,.35,1);
+            animation-fill-mode: forwards; animation-iteration-count: 1;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translate3d(0, -24px, 0) rotate(0deg); opacity: 1; }
+            100% { transform: translate3d(var(--dx, 0), 106vh, 0) rotate(var(--rot, 360deg)); opacity: .85; }
+        }
+
+        /* ---------- Binnenkomen bij het scrollen ----------
+           Het patroon dat apple.com overal gebruikt: inhoud schuift zacht van
+           onderen omhoog zodra hij in beeld komt, en dan een keer -- geen
+           heen-en-weer bij elke scroll.
+
+           Het verbergen hangt aan .js-reveal op <html>, dat in de <head> wordt
+           gezet nog voor er iets geverfd is. Dat is bewust: zou die klasse pas
+           onderaan de pagina worden gezet, dan zie je alles eerst staan en
+           daarna wegspringen. En zonder JS (of zonder IntersectionObserver)
+           komt de klasse er nooit, dus dan staat alles er meteen. */
+        :root.js-reveal .hero > *,
+        :root.js-reveal .card,
+        :root.js-reveal .section,
+        :root.js-reveal .laptop-block,
+        :root.js-reveal .login-card {
+            opacity: 0; transform: translateY(28px);
+            transition: opacity .8s cubic-bezier(.22,.61,.36,1), transform .8s cubic-bezier(.22,.61,.36,1);
+        }
+        :root.js-reveal .is-in { opacity: 1; transform: none; }
+        /* De regels van de hero komen na elkaar binnen in plaats van tegelijk. */
+        :root.js-reveal .hero > *:nth-child(2) { transition-delay: .09s; }
+        :root.js-reveal .hero > *:nth-child(3) { transition-delay: .18s; }
+        @media (prefers-reduced-motion: reduce) {
+            :root.js-reveal .hero > *,
+            :root.js-reveal .card,
+            :root.js-reveal .section,
+            :root.js-reveal .laptop-block,
+            :root.js-reveal .login-card { opacity: 1; transform: none; transition: none; }
+        }
+
+        /* Stap 1, 2 en 3 stuiteren na elkaar binnen zodra het stappenblok in
+           beeld komt (de kaart krijgt dan .is-in). Ze vallen van boven in en
+           veren een paar keer na. fill-mode both houdt ze onzichtbaar tot hun
+           beurt. Bewust NIET uit bij prefers-reduced-motion: de eigenaar wil
+           beweging, net als bij de wormen en de confetti. */
+        @keyframes step-bounce {
+            0%   { opacity: 0; transform: translateY(-70px) scale(.92); }
+            35%  { opacity: 1; transform: translateY(0) scale(1.02, .96); }
+            50%  { transform: translateY(-22px) scale(1); }
+            65%  { transform: translateY(0) scale(1.01, .98); }
+            78%  { transform: translateY(-8px); }
+            90%  { transform: translateY(0); }
+            95%  { transform: translateY(-2px); }
+            100% { opacity: 1; transform: none; }
+        }
+        :root.js-reveal .card:not(.is-in) .step { opacity: 0; }
+        :root.js-reveal .card.is-in .step {
+            animation: step-bounce 1.1s cubic-bezier(.3,.7,.4,1) both;
+            animation-delay: .25s;
+        }
+        :root.js-reveal .card.is-in .step:nth-child(2) { animation-delay: .5s; }
+        :root.js-reveal .card.is-in .step:nth-child(3) { animation-delay: .75s; }
+
+        /* ---------- Kop ---------- */
+        /* Dunner en met een sterkere verzadiging achter het glas: saturate(180%)
+           is de waarde die Apple gebruikt, en die maakt het verschil -- kleur
+           die onder de balk doorloopt blijft leven in plaats van grijs weg te
+           vallen. Let op: 64px hoog (12 + 40 + 12), waar .login-wrap op rekent. */
         .topbar {
-            position: sticky; top: 0; z-index: 10;
-            display: flex; align-items: center; justify-content: space-between; gap: 16px;
-            padding: 16px 24px;
-            background: var(--bg);
-            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 50;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; padding: 12px clamp(20px, 4vw, 56px);
+            background: var(--surface-blur);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--hairline);
         }
-        .merk { display: flex; align-items: center; gap: 14px; color: #ffffff; }
-        .merk svg { height: 22px; width: auto; display: block; }
-        .merk span { color: var(--muted); font-weight: 600; padding-left: 14px; border-left: 1px solid var(--border); }
-
-        /* Knoppen */
-        .knop { border-radius: 100px; padding: 12px 22px; cursor: pointer; font-weight: 700; border: 0; white-space: nowrap; }
-        .knop-cta { background: var(--accent); color: var(--on-accent); }
-        .knop-cta:hover { filter: brightness(1.06); }
-        .knop-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); font-weight: 600; }
-        .knop-ghost:hover { border-color: var(--accent); }
-        .knop:disabled { opacity: .5; cursor: default; }
-        .knop:focus-visible, .optie:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-        /* Indeling */
-        .indeling {
-            width: 100%; max-width: 1180px; margin: 0 auto;
-            padding: 24px;
-            display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px;
+        .brand {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-weight: 600; font-size: 1.02rem; letter-spacing: -.02em;
+            text-decoration: none; color: var(--text);
+        }
+        .brand-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--lime); flex-shrink: 0;
         }
 
-        /* Chat */
-        .chat {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
-            display: flex; flex-direction: column;
-            height: calc(100vh - 120px); min-height: 480px;
+        .topbar-actions { display: inline-flex; align-items: center; gap: 12px; }
+
+        /* ---------- Themakiezer in de balk ----------
+           Zelfde opzet als het taalmenu ernaast: openen gebeurt met CSS op
+           :hover en :focus-within, zodat het met de muis openklapt bij langs
+           gaan en met een tik of tab ook. Geen JS nodig om te openen.
+           De knop toont het pictogram van de stand die NU te zien is; welke
+           van de drie dat is regelt de CSS onderaan op basis van data-theme. */
+        .theme { position: relative; }
+        .theme-toggle {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; padding: 0;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--sand-line); border-radius: 99px;
+            cursor: pointer; transition: background .15s, border-color .15s;
         }
-        .chat-kop { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-        .chat-kop h1 { font-size: 18px; font-weight: 600; margin: 0; }
-        .status-stip { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
-        .chat-kop small { color: var(--muted); margin-left: auto; }
+        .theme-toggle:hover { background: var(--sand-bg); border-color: var(--sand-text); }
+        .theme-toggle:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
+        .theme-toggle svg { width: 18px; height: 18px; fill: currentColor; display: block; }
+        .theme-toggle .icon-moon, .theme-toggle .icon-neon, .theme-toggle .icon-studio { display: none; }
+        .theme-toggle .icon-sun { display: inline-flex; }
 
-        .berichten { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
-        .bericht { max-width: 82%; padding: 12px 16px; border-radius: 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
-        .bericht.bot { background: var(--bg-card2); border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 6px; }
-        .bericht.gebruiker { background: var(--accent); color: var(--on-accent); align-self: flex-end; border-bottom-right-radius: 6px; font-weight: 600; }
-
-        .opties { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; max-width: 100%; }
-        .optie {
-            background: transparent; border: 1.5px solid var(--border); color: var(--text);
-            border-radius: 100px; padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 15px;
+        .theme-menu {
+            display: none; position: absolute; right: 0; top: calc(100% + 6px);
+            background: var(--surface); border: 1px solid var(--sand-line);
+            border-radius: var(--r); box-shadow: var(--shadow-lg);
+            min-width: 176px; padding: 6px; z-index: 60;
         }
-        .optie:hover:not(:disabled) { border-color: var(--accent); }
-        .optie.hoofd { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
-        .optie.gekozen { border-color: var(--accent); }
-        .optie:disabled { cursor: default; opacity: .45; }
-        .optie.gekozen:disabled { opacity: 1; }
-
-        .invoer { display: flex; gap: 10px; padding: 14px; border-top: 1px solid var(--border); }
-        .invoer input {
-            flex: 1; min-width: 0; background: var(--bg-input); border: 1px solid var(--border);
-            border-radius: 100px; padding: 12px 18px; outline: none;
+        /* Onzichtbare brug naar de knop, anders valt het menu dicht zodra de
+           muis het gaatje ertussen raakt. Zelfde truc als bij het taalmenu. */
+        .theme-menu::before { content: ''; position: absolute; top: -8px; left: 0; width: 100%; height: 8px; }
+        .theme:hover .theme-menu, .theme:focus-within .theme-menu { display: block; }
+        .theme-menu button {
+            display: flex; align-items: center; gap: 10px; width: 100%;
+            padding: 9px 10px; border: 0; border-radius: var(--r-sm);
+            background: none; color: var(--text);
+            font: inherit; font-size: .9rem; font-weight: 700;
+            text-align: left; cursor: pointer;
         }
-        .invoer input::placeholder { color: var(--label); }
-        .invoer input:focus { border-color: var(--accent); }
-        .invoer input:disabled { opacity: .6; }
-
-        /* Zijkolom */
-        .kaart { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; align-self: start; }
-        .kaart h2 { font-size: 16px; font-weight: 600; margin: 0 0 12px; }
-        .stappen { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; color: var(--muted); font-size: 15px; counter-reset: stap; }
-        .stappen li { display: flex; gap: 10px; }
-        .stappen li::before {
-            counter-increment: stap; content: counter(stap);
-            flex: none; width: 24px; height: 24px; border-radius: 50%;
-            background: var(--bg-card2); border: 1px solid var(--border); color: var(--text);
-            font-size: 13px; font-weight: 600; display: grid; place-items: center;
+        .theme-menu button:hover { background: var(--sand-bg); }
+        .theme-menu button:focus-visible { outline: 3px solid var(--lime); outline-offset: -2px; }
+        .theme-menu svg { width: 17px; height: 17px; fill: currentColor; display: block; }
+        .tm-icon { display: inline-flex; color: var(--sand-text); flex-shrink: 0; }
+        .tm-label { flex: 1; }
+        /* Het vinkje houdt zijn ruimte bezet, zodat de regels niet verspringen
+           als je een andere stand kiest. */
+        .tm-tick { display: inline-flex; visibility: hidden; color: var(--ok-500); flex-shrink: 0; }
+        /* Welke regel actief is leest de CSS zelf uit data-theme. Zo hoeft de
+           server niets te weten van de keuze, die in localStorage staat. */
+        :root[data-theme="light"] .theme-menu [data-set="light"] .tm-tick,
+        :root[data-theme="dark"] .theme-menu [data-set="dark"] .tm-tick,
+        :root[data-theme="neon"] .theme-menu [data-set="neon"] .tm-tick,
+        :root[data-theme="studio"] .theme-menu [data-set="studio"] .tm-tick { visibility: visible; }
+        :root[data-theme="light"] .theme-menu [data-set="light"] .tm-icon,
+        :root[data-theme="dark"] .theme-menu [data-set="dark"] .tm-icon,
+        :root[data-theme="neon"] .theme-menu [data-set="neon"] .tm-icon,
+        :root[data-theme="studio"] .theme-menu [data-set="studio"] .tm-icon { color: var(--text); }
+        /* Nog nooit gekozen: dan volgt de pagina het systeem. Er is geen
+           'systeem'-regel in het menu, dus het vinkje gaat naar de stand die je
+           op dat moment werkelijk ziet -- licht, of donker als het systeem dat
+           zegt. Klik je die aan, dan wordt hij simpelweg vastgelegd. */
+        :root:not([data-theme]) .theme-menu [data-set="light"] .tm-tick { visibility: visible; }
+        :root:not([data-theme]) .theme-menu [data-set="light"] .tm-icon { color: var(--text); }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) .theme-menu [data-set="light"] .tm-tick { visibility: hidden; }
+            :root:not([data-theme]) .theme-menu [data-set="light"] .tm-icon { color: var(--sand-text); }
+            :root:not([data-theme]) .theme-menu [data-set="dark"] .tm-tick { visibility: visible; }
+            :root:not([data-theme]) .theme-menu [data-set="dark"] .tm-icon { color: var(--text); }
         }
 
-        @media (max-width: 900px) {
-            .indeling { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 16px; }
-            .chat { height: calc(100dvh - 104px); }
+        /* Snelknop rechtsboven, alleen op het admin dashboard. Zelfde pill-vorm
+           als de taalknop zodat de balk een geheel blijft. */
+        .nav-home {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--sand-line);
+            padding: 8px 14px; border-radius: 99px;
+            font: inherit; font-weight: 700; font-size: 0.85rem;
+            text-decoration: none; transition: background .15s, border-color .15s;
+        }
+        .nav-home:hover { background: var(--sand-bg); border-color: var(--sand-text); }
+        .nav-home:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
+        .nav-home svg { width: 16px; height: 16px; fill: currentColor; margin: 0; }
+
+        .lang { position: relative; }
+        .lang-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--sand-line);
+            padding: 8px 14px; border-radius: 99px;
+            font: inherit; font-weight: 700; font-size: 0.85rem;
+            cursor: pointer; transition: background .15s, border-color .15s;
+        }
+        .lang-btn:hover { background: var(--sand-bg); border-color: var(--sand-text); }
+        .lang-menu {
+            display: none; position: absolute; right: 0; top: calc(100% + 6px);
+            background: var(--surface); border: 1px solid var(--sand-line);
+            border-radius: var(--r); box-shadow: 0 12px 28px rgba(13,32,35,.12);
+            min-width: 160px; padding: 6px; z-index: 40;
+        }
+        .lang-menu::before { content: ''; position: absolute; top: -8px; left: 0; width: 100%; height: 8px; }
+        .lang-menu a {
+            display: block; padding: 9px 12px; border-radius: var(--r-sm);
+            text-decoration: none; font-size: .9rem; font-weight: 600;
+        }
+        .lang-menu a:hover { background: var(--sand-bg); }
+        .lang:hover .lang-menu, .lang:focus-within .lang-menu { display: block; }
+
+        /* ---------- Structuur ----------
+           Ruimer ademen. Apple laat secties ver uit elkaar staan; dat is wat
+           een pagina rustig maakt, meer nog dan de kleuren. */
+        .page { max-width: var(--maxw); margin: 0 auto; padding: clamp(44px, 6vw, 96px) clamp(20px, 4vw, 56px) clamp(80px, 10vw, 140px); }
+        .page-narrow { max-width: 760px; }
+        .page-wide { max-width: var(--maxw); }
+
+        /* ---------- Koppen ----------
+           De tracking staat in em in plaats van px. Dat is het verschil dat je
+           bij Apple ziet: bij een clamp() die van 2.6rem naar 4.2rem loopt
+           blijft een vaste -1.4px op het grote formaat veel te ruim, terwijl
+           -.032em netjes meeschaalt. Verder: iets lichter gewicht (700 in
+           plaats van 800) en een strakkere regelafstand. */
+        h1 {
+            font-size: clamp(2.3rem, 6vw, 4.2rem); font-weight: 700;
+            letter-spacing: -.032em; line-height: 1.05; margin-bottom: 14px;
+        }
+        h2 { font-size: 1.35rem; font-weight: 700; letter-spacing: -.022em; line-height: 1.18; }
+        /* Korte regellengte hoort bij deze schaal: lange regels op 1.35rem
+           lezen als een lap tekst in plaats van als een intro. */
+        .lead {
+            font-size: clamp(1.15rem, 1.6vw, 1.35rem); line-height: 1.42;
+            letter-spacing: -.014em; color: var(--ink-soft); max-width: 50ch;
+        }
+        .muted { color: var(--sand-text); font-size: .92rem; }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--hairline);
+            border-radius: var(--r); padding: clamp(26px, 3.4vw, 44px);
+        }
+        .stack > * + * { margin-top: 22px; }
+
+        /* ---------- Statusregel certificaat ---------- */
+        .status {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 10px 16px; border-radius: 99px;
+            font-weight: 600; font-size: .95rem;
+        }
+        .status .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        .status-ok { background: var(--ok-100); color: #005c24; }
+        .status-ok .dot { background: var(--ok-500); }
+        .status-warn { background: var(--warn-100); color: #6b5200; }
+        .status-warn .dot { background: var(--warn-500); }
+        .status-err { background: var(--err-100); color: var(--err-700); }
+        .status-err .dot { background: var(--err-500); }
+
+        /* ---------- Knoppen ----------
+           Apple-vorm: een volle pil, compacter dan hiervoor, met een tekst die
+           juist iets groter is (17px) en een lichter gewicht. En geen optillen
+           bij hover: daar verandert alleen de tint. Dat laatste is het duidelijkst
+           herkenbare verschil -- Apple-knoppen bewegen niet onder je muis. */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            background: var(--lime); color: var(--ink);
+            border: 1px solid var(--lime); border-radius: var(--r-pill);
+            /* 1rem is met de nieuwe basis precies de 17px die Apple aanhoudt. */
+            padding: 12px 23px; font: inherit; font-weight: 600; font-size: 1rem;
+            letter-spacing: -.014em;
+            text-decoration: none; cursor: pointer;
+            transition: background .2s ease, border-color .2s ease;
+        }
+        .btn:hover { background: var(--lime-dark); border-color: var(--lime-dark); }
+        .btn:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+
+        .btn-ghost {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            background: transparent; color: var(--text);
+            border: 1px solid var(--sand-text); border-radius: var(--r-pill);
+            padding: 12px 23px; font: inherit; font-weight: 600; font-size: 1rem;
+            letter-spacing: -.014em;
+            text-decoration: none; cursor: pointer;
+            transition: background .2s ease, border-color .2s ease;
+        }
+        .btn-ghost:hover { background: var(--surface); border-color: var(--text); }
+
+        .btn-small {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--hairline); border-radius: var(--r-pill);
+            padding: 8px 16px; font: inherit; font-weight: 600; font-size: .875rem;
+            letter-spacing: -.01em;
+            cursor: pointer; transition: background .2s ease, border-color .2s ease;
+        }
+        .btn-small:hover { background: var(--sand-bg); border-color: var(--sand-text); }
+
+        .btn-danger {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--surface); color: var(--err-700);
+            border: 1px solid var(--err-200, #ff8a8a); border-radius: var(--r-pill);
+            padding: 8px 16px; font: inherit; font-weight: 600; font-size: .875rem;
+            cursor: pointer; transition: background .15s, color .15s;
+        }
+        .btn-danger:hover { background: var(--err-500); color: var(--white); border-color: var(--err-500); }
+
+        .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .link-row { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; margin-top: 8px; }
+        .link-row a { font-weight: 700; font-size: .92rem; text-decoration: none; border-bottom: 1px solid var(--sand-text); padding-bottom: 1px; }
+        .link-row a:hover { border-bottom-color: var(--ink); }
+
+        /* ---------- Uitleg in stappen ---------- */
+        .steps { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+        .step {
+            background: var(--surface); border: 1px solid var(--hairline);
+            border-radius: var(--r); padding: 26px;
+        }
+        .step-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--lime); color: var(--ink);
+            font-weight: 800; font-size: .88rem; margin-bottom: 10px;
+        }
+        .step h3 { font-size: 1.08rem; font-weight: 700; letter-spacing: -.018em; margin-bottom: 6px; }
+        .step p { font-size: .95rem; line-height: 1.47; color: var(--ink-soft); }
+        .step code {
+            background: var(--sand-bg); border: 1px solid var(--sand-line);
+            border-radius: var(--r-sm); padding: 1px 6px; font-size: .86rem;
+        }
+
+        /* ---------- Installatiecode ---------- */
+        .code-panel {
+            background: var(--ink); color: var(--white);
+            border-radius: var(--r); padding: 26px 28px;
+            display: flex; flex-wrap: wrap; align-items: center;
+            justify-content: space-between; gap: 20px;
+        }
+        .code-label { font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: var(--teal-500); }
+        .code-value {
+            font-size: clamp(2rem, 7vw, 2.9rem); font-weight: 800;
+            letter-spacing: .34em; color: var(--lime); line-height: 1.2;
+            font-variant-numeric: tabular-nums;
+        }
+        .code-hint { font-size: .86rem; color: var(--teal-100); max-width: 34ch; }
+        .code-copy {
+            background: transparent; color: var(--white);
+            border: 1px solid var(--teal-500); border-radius: 99px;
+            padding: 9px 18px; font: inherit; font-weight: 700; font-size: .85rem;
+            cursor: pointer; transition: background .15s, color .15s;
+        }
+        .code-copy:hover { background: var(--lime); color: var(--ink); border-color: var(--lime); }
+
+        /* ---------- Tabellen ---------- */
+        .table-wrap { overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--r); background: var(--surface); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 14px 18px; border-bottom: 1px solid var(--grey-100); font-size: .93rem; vertical-align: middle; }
+        th {
+            background: var(--sand-bg); color: var(--sand-text);
+            font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px;
+            border-bottom: 1px solid var(--sand-line); white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        td.email { font-weight: 700; }
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: .8rem; font-weight: 800; }
+        .pill-ok { background: var(--ok-100); color: #005c24; }
+        .pill-warn { background: var(--warn-100); color: #6b5200; }
+        .pill-err { background: var(--err-100); color: var(--err-700); }
+        .empty { text-align: center; color: var(--sand-text); padding: 26px; }
+
+        /* ---------- Formulieren ---------- */
+        .form-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+        input[type="email"], input[type="text"], input[type="date"] {
+            font: inherit; font-size: .95rem;
+            padding: 12px 16px; border-radius: var(--r-sm);
+            border: 1px solid var(--sand-text); background: var(--surface); color: var(--text);
+            outline: none; min-width: 0;
+        }
+        input:focus { border-color: var(--text); box-shadow: 0 0 0 3px rgba(173,255,0,.45); }
+        .grow { flex: 1 1 260px; }
+
+        /* Datumveld met een eigen kalenderknop. Het ingebouwde icoon van de
+           browser was donker op de donkere thema's en dus onvindbaar; dat
+           verbergen we en de lime knop opent de kiezer (showPicker). */
+        input[type="date"] { color-scheme: dark; }
+        .date-field { position: relative; display: inline-flex; align-items: center; }
+        .date-field input[type="date"] { padding-right: 56px; cursor: pointer; }
+        .date-field input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
+        .date-btn {
+            position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+            width: 38px; height: 38px; border: 0; border-radius: var(--r-sm);
+            background: var(--lime); color: #0d2023; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: transform .15s ease, filter .15s ease;
+        }
+        .date-btn:hover { filter: brightness(1.08); transform: translateY(-50%) scale(1.06); }
+        .date-btn:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
+        .date-btn svg { width: 18px; height: 18px; fill: currentColor; display: block; }
+
+        /* ---------- Secties ---------- */
+        .section { margin-top: clamp(40px, 5vw, 72px); }
+        .section-head {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; cursor: pointer; user-select: none;
+            padding: 18px 22px; background: var(--surface);
+            border: 1px solid var(--hairline); border-radius: var(--r);
+        }
+        .section-head:hover { background: var(--sand-bg); }
+        .section-head .arrow { color: var(--sand-text); font-weight: 800; transition: transform .2s; }
+        .section-head.open .arrow { transform: rotate(90deg); }
+        .section-body { padding-top: 14px; }
+        .section-body.collapsed { display: none; }
+
+        .logbox {
+            background: var(--ink); color: var(--teal-100);
+            border-radius: var(--r); padding: 18px;
+            font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+            font-size: .8rem; line-height: 1.55;
+            max-height: 300px; overflow: auto; white-space: pre-wrap;
+        }
+
+        .notice {
+            background: var(--err-100); color: var(--err-700);
+            border: 1px solid #ff8a8a; border-radius: var(--r);
+            padding: 14px 18px; font-weight: 700; font-size: .93rem;
+        }
+        .info {
+            background: var(--teal-100); color: var(--ink-soft);
+            border-radius: var(--r); padding: 16px 20px; font-size: .93rem;
+        }
+
+        /* ---------- Inlogvenster (grote hero, bijna schermvullend) ---------- */
+        .login-wrap {
+            min-height: calc(100vh - 64px);
+            min-height: calc(100dvh - 64px);
+            display: flex; align-items: center; justify-content: center;
+            padding: clamp(16px, 3vw, 40px);
+        }
+        .login-card {
+            position: relative; overflow: hidden;
+            width: 100%; max-width: min(1080px, 94vw);
+            min-height: min(72vh, 660px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 14px;
+            background:
+                radial-gradient(1100px 520px at 50% -8%, rgba(173,255,0,.12), transparent 60%),
+                var(--surface);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-lg); padding: clamp(36px, 6vw, 88px); text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+        .login-card::after {
+            content: ''; position: absolute; left: 50%; bottom: -30%;
+            width: 130%; height: 60%; transform: translateX(-50%);
+            background: radial-gradient(closest-side, rgba(154,194,197,.16), transparent);
+            pointer-events: none;
+        }
+        .login-brandline {
+            display: inline-flex; align-items: center; gap: 9px;
+            font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+            font-size: .74rem; color: var(--sand-text);
+        }
+        .login-brandline .brand-dot { width: 9px; height: 9px; }
+        .login-card h1 { font-size: clamp(2.4rem, 6.6vw, 5rem); letter-spacing: -.036em; line-height: 1.03; margin-bottom: 0; }
+        .login-card .lead { max-width: 42ch; margin: 0 auto; font-size: clamp(1.2rem, 2vw, 1.55rem); }
+        .login-card .muted { max-width: 40ch; margin: 0 auto; }
+        .login-card .notice { text-align: left; }
+        .login-actions { display: flex; justify-content: center; margin: 6px 0; }
+        .login-card .btn-google { width: auto; min-width: 280px; padding: 14px 30px; font-size: 1.0625rem; }
+
+        /* Scheiding tussen Google-SSO en het wachtwoordformulier eronder. */
+        .login-sep {
+            display: flex; align-items: center; gap: 14px;
+            width: 100%; max-width: 340px; margin: 10px auto 2px;
+            color: var(--sand-text); font-size: .78rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .12em;
+        }
+        .login-sep::before, .login-sep::after {
+            content: ''; flex: 1; height: 1px; background: var(--hairline);
+        }
+        .login-pw {
+            display: flex; flex-direction: column; gap: 10px;
+            width: 100%; max-width: 340px; margin: 0 auto; text-align: left;
+        }
+        .login-pw input, .login-pw .btn { width: 100%; }
+        /* Wel voor schermlezers, niet in beeld: de velden hebben een
+           placeholder, maar die telt niet als label. */
+        .sr-only {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+        }
+
+        /* Google-SSO-knop: neutraal vlak met de merk-'G', valt duidelijk te
+           herkennen als 'inloggen met Google' en kantelt mee met het thema. */
+        .btn-google {
+            display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+            width: 100%;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--sand-line); border-radius: 99px;
+            padding: 14px 22px; font: inherit; font-weight: 700; font-size: 1rem;
+            text-decoration: none; cursor: pointer;
+            box-shadow: 0 1px 2px rgba(13,32,35,.10);
+            transition: background .15s, box-shadow .15s, transform .15s, border-color .15s;
+        }
+        /* Geen optillen, net als bij de andere knoppen: alleen de tint verandert.
+           Juist hier valt het op, want dit is de knop van de inlogpagina. */
+        .btn-google:hover {
+            background: var(--sand-bg); border-color: var(--sand-text);
+        }
+        .btn-google:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
+        .btn-google svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+        /* ---------- Diepte met mate ----------
+           Vlakken die gewoon op de pagina liggen krijgen geen schaduw meer; ze
+           scheiden zich al af door hun vulling. Schaduw blijft voorbehouden aan
+           wat er echt bovenop zweeft: de uitklapmenu's en het inlogvenster.
+           Dat onderscheid is precies hoe Apple het doet. */
+        .card, .step, .table-wrap, .code-panel, .section-head { box-shadow: none; }
+        .stack-lg > * + * { margin-top: clamp(48px, 7vw, 104px); }
+
+        /* ---------- Account-menu rechtsboven ---------- */
+        .account { position: relative; }
+        .account-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--sand-line);
+            padding: 6px 14px 6px 6px; border-radius: 99px;
+            font: inherit; font-weight: 700; font-size: .9rem;
+            cursor: pointer; box-shadow: var(--shadow-sm);
+            transition: background .15s, border-color .15s;
+        }
+        .account-btn:hover { background: var(--sand-bg); border-color: var(--sand-text); }
+        .avatar {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px; border-radius: 50%;
+            background: var(--lime); color: var(--ink);
+            font-weight: 800; font-size: .9rem; flex-shrink: 0;
+        }
+        .account-name { max-width: 20ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .account .caret { color: var(--sand-text); font-size: .7rem; }
+        .account-menu {
+            display: none; position: absolute; right: 0; top: calc(100% + 8px);
+            background: var(--surface); border: 1px solid var(--sand-line);
+            border-radius: var(--r); box-shadow: var(--shadow-lg);
+            min-width: 250px; padding: 8px; z-index: 60;
+        }
+        .account-menu::before { content: ''; position: absolute; top: -10px; left: 0; width: 100%; height: 10px; }
+        .account-email {
+            padding: 8px 12px 10px; font-size: .82rem; color: var(--text);
+            border-bottom: 1px solid var(--sand-line); margin-bottom: 6px; word-break: break-all;
+        }
+        .account-email small { display: block; color: var(--sand-text); text-transform: uppercase; letter-spacing: .1em; font-size: .64rem; margin-bottom: 3px; }
+        .account-menu a {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 12px; border-radius: var(--r-sm);
+            text-decoration: none; font-size: .9rem; font-weight: 700;
+        }
+        .account-menu a:hover { background: var(--sand-bg); }
+        .account-menu a.danger { color: var(--err-700); }
+        .account-menu a.danger:hover { background: var(--err-100); }
+        .account:hover .account-menu, .account:focus-within .account-menu { display: block; }
+
+        /* ---------- Portaal-hero ---------- */
+        .hero { display: grid; gap: 22px; align-items: start; padding: clamp(28px, 5vw, 72px) 0 8px; }
+        .hero h1 { font-size: clamp(2.3rem, 6.4vw, 4.4rem); letter-spacing: -.034em; line-height: 1.04; margin-bottom: 0; }
+        .hero .lead { font-size: clamp(1.2rem, 2vw, 1.5rem); max-width: 46ch; }
+        .portal-actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+        .btn-lg { padding: 15px 30px; font-size: 1.125rem; }
+        .section-title { font-size: clamp(1.5rem, 2.6vw, 2.1rem); font-weight: 700; letter-spacing: -.026em; line-height: 1.12; margin-bottom: 8px; }
+
+        /* ---------- Laptop met installatiecode ----------
+           Het deksel scharniert eerst helemaal neer op de deck; pas daarna
+           trekt het toneel samen. Die volgorde is het hele punt: krimpen
+           tijdens de rotatie knipt het scherm van bovenaf weg en leest als
+           samenvouwen in plaats van dichtklappen. Daarom ook geen
+           overflow: hidden meer. De camera (perspective-origin) staat op
+           scharnierhoogte -- 32px boven de onderkant, waar het deksel op de
+           deck rust -- en blijft daar bij elke toneelhoogte. Zo eindigt het
+           deksel exact edge-on op de deck en steekt het er nooit onderuit. */
+        .laptop-block { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .laptop-head { display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; justify-content: center; margin-bottom: 26px; }
+        .laptop {
+            position: relative; width: min(540px, 100%); margin: 0 auto 30px;
+            perspective: 1800px; perspective-origin: 50% calc(100% - 32px);
+            user-select: none;
+            /* Dicht maakt de laptop ruimte onder zich vrij voor de klik-hint.
+               Bij openklappen mag die ruimte meteen weg, bij dichtklappen pas
+               nadat het deksel geland is -- vandaar de vertraging alleen daar. */
+            transition: margin-bottom .3s ease;
+        }
+        .laptop.is-closed { margin-bottom: 66px; transition-delay: .38s; }
+        .laptop-stage {
+            position: relative; height: 320px; overflow: visible; z-index: 1;
+            transform-style: preserve-3d;
+            /* Openklappen: eerst ruimte maken, daarna pas het deksel omhoog. */
+            transition: height .34s cubic-bezier(.4,0,.2,1);
+        }
+        /* Dichtklappen: wachten tot het deksel neer is voordat de ruimte weggaat. */
+        .laptop.is-closed .laptop-stage { height: 58px; transition-delay: .38s; }
+        .laptop-lid {
+            position: absolute; left: 50%; bottom: 32px; width: 94%;
+            transform: translateX(-50%) rotateX(0deg);
+            transform-origin: bottom center;
+            transition: transform .5s cubic-bezier(.22,.68,.3,1) .22s, opacity .01s linear 0s;
+        }
+        .laptop.is-closed .laptop-lid {
+            transform: translateX(-50%) rotateX(-90deg);
+            /* Valt zoals een deksel: traag los, versnellend, zachte landing.
+               Daarna meteen weg, zodat de 3px-rand niet als haarlijn blijft
+               staan naast de getekende dichte laptop die het overneemt. */
+            opacity: 0;
+            transition: transform .52s cubic-bezier(.55,.08,.3,1) 0s, opacity .01s linear .5s;
+        }
+        .laptop-screen {
+            position: relative;
+            background: var(--ink); border: 3px solid #0a1618;
+            border-radius: 16px; padding: 30px 26px 34px;
+            box-shadow: 0 12px 26px rgba(13,32,35,.22), inset 0 1px 0 rgba(255,255,255,.06);
+        }
+        .laptop-screen::before { content: ''; position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 44px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.10); }
+        .laptop-screen-inner { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 10px; }
+        .laptop .code-label { color: var(--teal-500); }
+        .laptop .code-value { color: var(--lime); text-shadow: 0 0 28px rgba(173,255,0,.45); }
+        .laptop-deck {
+            position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+            width: 100%; height: 32px;
+            background: linear-gradient(180deg, var(--laptop-hinge) 0%, var(--laptop-shell) 42%);
+            border: 1px solid var(--laptop-edge);
+            border-radius: 7px 7px 16px 16px;
+            transition: opacity .01s linear 0s;
+        }
+        .laptop.is-closed .laptop-deck { opacity: 0; transition: opacity .01s linear .5s; }
+        .laptop-deck::before { content: ''; position: absolute; left: 50%; top: 8px; transform: translateX(-50%); width: 78px; height: 6px; border-radius: 4px; background: rgba(13,32,35,.14); }
+        .laptop-deck::after { content: ''; position: absolute; left: 50%; top: 2px; transform: translateX(-50%); width: 130px; height: 4px; border-radius: 0 0 6px 6px; background: rgba(13,32,35,.22); }
+        .laptop-shadow {
+            position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%);
+            width: 82%; height: 24px; z-index: 0;
+            background: radial-gradient(closest-side, rgba(13,32,35,.30), transparent 72%);
+            filter: blur(5px);
+            transition: width .34s ease, opacity .34s ease;
+        }
+        .laptop.is-closed .laptop-shadow { width: 70%; opacity: .8; transition-delay: .38s; }
+
+        /* ---------- De dichtgeklapte laptop ----------
+           Zodra het deksel neer is staat het exact edge-on: onzichtbaar, dus
+           bleef er alleen een plakje deck over. Daarom neemt hier een apart
+           getekende clamshell het over -- van schuin boven gezien, zodat je
+           echt een laptop ziet liggen: het deksel als trapezium (achterkant
+           smaller = perspectief), de naad ertussen en de onderkant met een
+           duimuitsparing. De wissel valt precies samen met het moment dat het
+           deksel edge-on ligt, dus er is geen sprong te zien.
+           Het geheel is een knop: erop klikken klapt hem weer open. */
+        .laptop-closed {
+            position: absolute; left: 50%; bottom: 0; z-index: 3;
+            width: 100%; height: 56px; padding: 0; margin: 0;
+            background: none; border: 0; font: inherit; color: inherit;
+            transform: translateX(-50%) translateY(7px) scale(.97);
+            opacity: 0; visibility: hidden; pointer-events: none; cursor: pointer;
+            transition: opacity .18s ease, transform .22s ease, visibility 0s linear .22s;
+        }
+        .laptop.is-closed .laptop-closed {
+            opacity: 1; visibility: visible; pointer-events: auto;
+            transform: translateX(-50%) translateY(0) scale(1);
+            transition: opacity .22s ease .5s, transform .34s cubic-bezier(.2,.75,.3,1) .5s, visibility 0s linear .5s;
+        }
+        .laptop.is-closed .laptop-closed:hover { transform: translateX(-50%) translateY(-4px) scale(1.02); }
+        .laptop-closed:focus-visible { outline: 3px solid var(--lime); outline-offset: 8px; border-radius: 16px; }
+
+        .lc-lid {
+            position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+            width: 93%; height: 30px;
+            background: var(--laptop-shell);
+            /* Achterkant smaller dan de voorkant: leest als van bovenaf gezien. */
+            clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+        }
+        /* Duimuitsparing midden in de voorrand van het deksel. */
+        .lc-lid::after {
+            content: ''; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+            width: 66px; height: 7px;
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            background: rgba(13,32,35,.24);
+        }
+        /* Merkstip op het deksel, zoals een logo op de achterkant. */
+        .lc-logo {
+            position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--lime); box-shadow: 0 0 12px rgba(173,255,0,.65);
+        }
+        /* Naad tussen deksel en onderkant. */
+        .lc-seam {
+            position: absolute; left: 50%; top: 30px; transform: translateX(-50%);
+            width: 99%; height: 3px; border-radius: 2px;
+            background: linear-gradient(90deg, transparent, rgba(13,32,35,.42) 10%, rgba(13,32,35,.42) 90%, transparent);
+        }
+        .lc-base {
+            position: absolute; left: 50%; top: 32px; transform: translateX(-50%);
+            width: 100%; height: 24px;
+            background: linear-gradient(180deg, var(--laptop-hinge) 0%, var(--laptop-shell) 55%);
+            border: 1px solid var(--laptop-edge);
+            border-radius: 4px 4px 13px 13px;
+            box-shadow: inset 0 -1px 0 rgba(255,255,255,.35);
+        }
+        /* Twee rubberen voetjes onderaan. */
+        .lc-base::before, .lc-base::after {
+            content: ''; position: absolute; bottom: -3px; width: 34px; height: 4px;
+            border-radius: 0 0 3px 3px; background: rgba(13,32,35,.32);
+        }
+        .lc-base::before { left: 12%; }
+        .lc-base::after { right: 12%; }
+
+        .lc-hint {
+            position: absolute; left: 50%; bottom: -40px; transform: translateX(-50%);
+            white-space: nowrap; font-size: .8rem; font-weight: 700; color: var(--sand-text);
+            opacity: 0; transition: opacity .2s ease;
+        }
+        .laptop.is-closed .lc-hint { opacity: 1; transition-delay: .62s; }
+
+        /* ---------- Letters die met de achtergrond meekleuren ----------
+           Zelfde ronde van 24 seconden als de strepen en de kleurwaas, dus de
+           koppen hebben op elk moment ongeveer de kleur van wat er achter
+           langs beweegt.
+
+           Met hue-rotate en niet met een verschuivend kleurverloop door de
+           letters, omdat hue-rotate de helderheid grofweg intact laat. Een
+           regenboog door de tekst zou in het lichte thema bij geel onleesbaar
+           worden; nu blijft een donkere kop donker en een lichte kop licht --
+           alleen de kleur draait rond. De startkleur staat per thema in
+           --heading-tint, zodat de tekst in elk thema genoeg contrast houdt.
+
+           Bewust alleen de koppen en het woordmerk: lopende tekst, tabellen en
+           knoplabels blijven staan waar ze staan, want die moet je gewoon
+           kunnen lezen. */
+        .brand, h1, h2, .section-title {
+            color: var(--heading-tint);
+            animation: text-hue 24s linear infinite;
+        }
+        @keyframes text-hue {
+            from { filter: hue-rotate(0deg); }
+            to   { filter: hue-rotate(360deg); }
+        }
+
+        /* De knoppen draaien dezelfde ronde mee als de letters.
+           Bij de hoofdknop is het het vlak dat verkleurt; de donkere tekst
+           daarop draait mee en blijft de hele ronde leesbaar (nagerekend: het
+           zakt nergens onder 8,6:1). Bij de vlakke knoppen zit de kleur in de
+           letter zelf, want die haalt zijn kleur nu uit --heading-tint in
+           plaats van uit --text; een bijna-zwarte letter zou door hue-rotate
+           immers nauwelijks van kleur veranderen.
+
+           Twee uitzonderingen met opzet: .btn-danger blijft rood, want die
+           kleur betekent iets en mag niet een halve ronde later groen zijn, en
+           het accountknopje blijft neutraal omdat daar iemands naam in staat. */
+        .btn, .btn-ghost, .btn-small, .theme-toggle, .nav-home, .lang-btn,
+        .code-copy, .brand-dot, .step-num, .avatar {
+            animation: text-hue 24s linear infinite;
+        }
+        .btn-ghost, .btn-small, .theme-toggle, .nav-home, .lang-btn {
+            color: var(--heading-tint);
+        }
+        .btn-ghost:hover { border-color: currentColor; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .brand, h1, h2, .section-title,
+            .btn, .btn-ghost, .btn-small, .theme-toggle, .nav-home, .lang-btn,
+            .code-copy, .brand-dot, .step-num, .avatar { animation: none; }
+        }
+
+        /* ---------- Donker thema ----------
+           Alleen de rol-tokens klappen om; --white en --ink blijven letterlijk,
+           zodat de bewust donkere panelen (installatiecode, logvensters) in
+           beide thema's kloppen. Ze krijgen in donker wel een rand, omdat hun
+           achtergrond dicht bij de paginakleur ligt. De blokken staan twee keer:
+           een keer voor de systeemvoorkeur (zolang de gebruiker niet expliciet
+           'light' koos) en een keer voor de handmatige keuze, die altijd wint. */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]):not([data-theme="neon"]) {
+                --surface: #15292d;
+                --text: #eef3f1;
+                --sand-bg: #0b1c20;
+                --sand-line: #2b4d51;
+                --sand-text: #95aba8;
+                --ink-soft: #b8cbc9;
+                --grey-100: #26453f;
+                --hairline: rgba(255,255,255,.13);
+                /* Lichte startkleur: rondgedraaid blijft die licht, en dat is
+                   wat je op een donkere achtergrond nodig hebt. */
+                --heading-tint: #b6ff6a;
+                --surface-blur: rgba(18,34,38,.72);
+                --laptop-shell: linear-gradient(180deg, #37484e 0%, #223035 60%, #1a262b 100%);
+                --laptop-edge: #0e1a1e;
+                --laptop-hinge: #33454b;
+                --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+                --shadow-md: 0 8px 22px rgba(0,0,0,.45);
+                --shadow-lg: 0 30px 70px rgba(0,0,0,.6);
+            }
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .code-panel,
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .logbox { border: 1px solid var(--sand-line); }
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .btn-danger { color: #ff9090; border-color: #7a3336; }
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .info { background: #123239; color: var(--ink-soft); }
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .notice { background: #3a1618; color: #ffb3b3; border-color: #6e2b2e; }
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .login-card { box-shadow: 0 18px 50px rgba(0,0,0,.45); }
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .btn-google { box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+            /* Systeem staat op donker en de gebruiker koos niets anders: dan is
+               de maan wat je nu ziet, dus die hoort op de knop. */
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .theme-toggle .icon-moon { display: inline-flex; }
+            :root:not([data-theme="light"]):not([data-theme="neon"]) .theme-toggle .icon-sun { display: none; }
+        }
+        :root[data-theme="dark"] {
+            --surface: #15292d;
+            --text: #eef3f1;
+            --sand-bg: #0b1c20;
+            --sand-line: #2b4d51;
+            --sand-text: #95aba8;
+            --ink-soft: #b8cbc9;
+            --grey-100: #26453f;
+            --hairline: rgba(255,255,255,.13);
+            --heading-tint: #b6ff6a;
+            --surface-blur: rgba(18,34,38,.72);
+            --laptop-shell: linear-gradient(180deg, #37484e 0%, #223035 60%, #1a262b 100%);
+            --laptop-edge: #0e1a1e;
+            --laptop-hinge: #33454b;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+            --shadow-md: 0 8px 22px rgba(0,0,0,.45);
+            --shadow-lg: 0 30px 70px rgba(0,0,0,.6);
+        }
+        :root[data-theme="dark"] .code-panel,
+        :root[data-theme="dark"] .logbox { border: 1px solid var(--sand-line); }
+        :root[data-theme="dark"] .btn-danger { color: #ff9090; border-color: #7a3336; }
+        :root[data-theme="dark"] .info { background: #123239; color: var(--ink-soft); }
+        :root[data-theme="dark"] .notice { background: #3a1618; color: #ffb3b3; border-color: #6e2b2e; }
+        :root[data-theme="dark"] .login-card { box-shadow: 0 18px 50px rgba(0,0,0,.45); }
+        :root[data-theme="dark"] .btn-google { box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+        :root[data-theme="dark"] .theme-toggle .icon-moon { display: inline-flex; }
+        :root[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+        /* Expliciet 'licht' moet de zon terugzetten, ook als het systeem donker
+           staat: de media-regel hierboven laat die stand met opzet met rust. */
+        :root[data-theme="light"] .theme-toggle .icon-sun { display: inline-flex; }
+        :root[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+        /* ---------- Neon-thema ----------
+           Derde stand naast licht en donker, alleen te kiezen met de knop
+           (nooit via prefers-color-scheme). Bijna-zwarte ondergrond met een
+           bloem van doorschijnende bladen en een fijn raster (zie .bg-bloom en
+           .bg-grid hierboven), glasplaten in plaats van dichte vlakken, en
+           knoppen die oplichten met een lichtveeg bij hover.
+           Dit blok staat NA het donkere thema en wint dus bij gelijke
+           specificiteit; in de systeem-donker-media staat neon bovendien
+           expliciet uitgesloten. */
+        :root[data-theme="neon"] {
+            --lime: #b6ff2e;
+            --lime-dark: #a2f000;
+            --neon-cyan: #22e0ff;
+            --neon-violet: #a855f7;
+            --neon-pink: #ff2fb9;
+            --ink: #05070f;
+            --ink-soft: #b9c6e6;
+            --surface: rgba(20, 26, 48, .60);
+            --text: #eef3ff;
+            --sand-bg: #05060f;
+            --sand-line: rgba(140, 175, 255, .22);
+            --sand-text: #9fb2dd;
+            --teal-100: #bfe9ff;
+            --teal-500: #56d8ff;
+            --grey-100: rgba(140, 175, 255, .14);
+            --hairline: rgba(150, 185, 255, .18);
+            --heading-tint: #c9ff7a;
+            --grey-300: #6d7fb0;
+            --grey-500: #8494c2;
+            --surface-blur: rgba(8, 12, 30, .55);
+            --laptop-shell: linear-gradient(180deg, #2b3560 0%, #171d3a 58%, #0e1226 100%);
+            --laptop-edge: #46549c;
+            --laptop-hinge: #37427a;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.6);
+            --shadow-md: 0 12px 32px rgba(0,0,0,.55);
+            --shadow-lg: 0 40px 90px rgba(0,0,0,.7), 0 0 60px rgba(34,224,255,.10);
+        }
+        :root[data-theme="neon"] .theme-toggle .icon-neon { display: inline-flex; }
+        :root[data-theme="neon"] .theme-toggle .icon-sun,
+        :root[data-theme="neon"] .theme-toggle .icon-moon { display: none; }
+
+        /* Alleen feller en met meer gloed: het verloop zelf is nu voor alle
+           thema's hetzelfde en kleurt continu door. Dikte en dasharray blijven
+           hier met rust, anders worden de stippen weer streepjes. */
+        :root[data-theme="neon"] .bg-lines .tail { opacity: .38; }
+        :root[data-theme="neon"] .bg-lines .head {
+            opacity: .95; filter: drop-shadow(0 0 9px rgba(34,224,255,.75));
+        }
+        :root[data-theme="neon"] .bg-lines .dots {
+            opacity: .68; filter: drop-shadow(0 0 8px rgba(34,224,255,.7));
+        }
+        :root[data-theme="neon"] .bg-lines .dots-sm {
+            opacity: .48; filter: drop-shadow(0 0 6px rgba(182,255,46,.6));
+        }
+
+        /* Glas in plaats van dichte vlakken. */
+        :root[data-theme="neon"] .card,
+        :root[data-theme="neon"] .step,
+        :root[data-theme="neon"] .table-wrap,
+        :root[data-theme="neon"] .section-head,
+        :root[data-theme="neon"] .account-menu,
+        :root[data-theme="neon"] .lang-menu,
+        :root[data-theme="neon"] .theme-menu {
+            background: var(--surface);
+            -webkit-backdrop-filter: blur(18px) saturate(1.4);
+            backdrop-filter: blur(18px) saturate(1.4);
+            border: 1px solid var(--sand-line);
+            box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.07);
+        }
+        :root[data-theme="neon"] .login-card {
+            background:
+                radial-gradient(1100px 520px at 50% -8%, rgba(34,224,255,.18), transparent 62%),
+                var(--surface);
+            -webkit-backdrop-filter: blur(20px) saturate(1.4);
+            backdrop-filter: blur(20px) saturate(1.4);
+            border: 1px solid var(--sand-line);
+            box-shadow: var(--shadow-lg);
+        }
+        :root[data-theme="neon"] .login-card::after {
+            background: radial-gradient(closest-side, rgba(168,85,247,.22), transparent);
+        }
+        :root[data-theme="neon"] .topbar { border-bottom: 1px solid rgba(140,190,255,.20); }
+        :root[data-theme="neon"] th { background: rgba(140,175,255,.08); color: var(--sand-text); }
+        :root[data-theme="neon"] .code-panel,
+        :root[data-theme="neon"] .logbox { background: rgba(5,8,20,.80); border: 1px solid var(--sand-line); }
+        :root[data-theme="neon"] .info { background: rgba(34,224,255,.10); color: var(--ink-soft); border: 1px solid rgba(34,224,255,.26); }
+        :root[data-theme="neon"] .notice { background: rgba(255,47,185,.12); color: #ffc0e6; border-color: rgba(255,47,185,.45); }
+        :root[data-theme="neon"] .status-ok, :root[data-theme="neon"] .pill-ok { background: rgba(0,255,150,.13); color: #7dffc0; }
+        :root[data-theme="neon"] .status-warn, :root[data-theme="neon"] .pill-warn { background: rgba(255,205,70,.13); color: #ffd97e; }
+        :root[data-theme="neon"] .status-err, :root[data-theme="neon"] .pill-err { background: rgba(255,70,110,.13); color: #ff9fb0; }
+        :root[data-theme="neon"] .step code { background: rgba(140,175,255,.10); border-color: var(--sand-line); }
+        :root[data-theme="neon"] .link-row a:hover { border-bottom-color: var(--lime); }
+        :root[data-theme="neon"] .account-menu a.danger { color: #ff8fb4; }
+        :root[data-theme="neon"] .account-menu a.danger:hover { background: rgba(255,47,185,.14); }
+        :root[data-theme="neon"] .account-menu a:hover,
+        :root[data-theme="neon"] .lang-menu a:hover,
+        :root[data-theme="neon"] .theme-menu button:hover,
+        :root[data-theme="neon"] .section-head:hover { background: rgba(34,224,255,.12); }
+        :root[data-theme="neon"] .tm-tick { color: var(--lime); }
+        :root[data-theme="neon"] input[type="email"],
+        :root[data-theme="neon"] input[type="text"],
+        :root[data-theme="neon"] input[type="date"] {
+            background: rgba(8,12,28,.72); border-color: var(--sand-line); color: var(--text);
+        }
+        :root[data-theme="neon"] input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(34,224,255,.30); }
+
+        /* Hier stond een vast wit-cyaan-lime verloop over de koppen. Dat is
+           weg: de koppen draaien nu in elk thema dezelfde kleurronde mee als
+           de achtergrond, en een eigen verloop in neon zou juist betekenen dat
+           die koppen NIET dezelfde kleur hebben als de rest. */
+
+        /* ---------- Knoppen in neon ----------
+           De hoofdknop is een verloop met een dubbele gloed; alle secundaire
+           knoppen zijn matglas dat cyaan oplicht. Beide krijgen bij hover een
+           lichtveeg (::after) die er eenmalig overheen loopt. */
+        :root[data-theme="neon"] .btn {
+            position: relative; overflow: hidden;
+            background: linear-gradient(118deg, var(--neon-cyan) 0%, var(--lime) 54%, #f4ff5a 100%);
+            color: #04121a; border: 0;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.20),
+                        0 8px 26px rgba(34,224,255,.35),
+                        0 4px 16px rgba(182,255,46,.28);
+        }
+        :root[data-theme="neon"] .btn:hover {
+            background: linear-gradient(118deg, #4ceaff 0%, #c6ff4e 54%, #f9ff7d 100%);
+            transform: translateY(-2px);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.30),
+                        0 14px 38px rgba(34,224,255,.50),
+                        0 6px 22px rgba(182,255,46,.40);
+        }
+        :root[data-theme="neon"] .btn-ghost,
+        :root[data-theme="neon"] .btn-small,
+        :root[data-theme="neon"] .theme-toggle,
+        :root[data-theme="neon"] .nav-home,
+        :root[data-theme="neon"] .lang-btn,
+        :root[data-theme="neon"] .account-btn,
+        :root[data-theme="neon"] .btn-google,
+        :root[data-theme="neon"] .laptop-toggle {
+            position: relative; overflow: hidden;
+            /* --heading-tint en niet --text: anders zouden deze knoppen in neon
+               niet meekleuren met de letters, want dit blok wint van de
+               basisregel hierboven. */
+            background: rgba(255,255,255,.05); color: var(--heading-tint);
+            border: 1px solid rgba(140,190,255,.30);
+            -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+            box-shadow: 0 2px 12px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.09);
+            transition: background .18s, border-color .18s, box-shadow .18s, transform .18s, color .18s;
+        }
+        :root[data-theme="neon"] .btn-ghost:hover,
+        :root[data-theme="neon"] .btn-small:hover,
+        :root[data-theme="neon"] .theme-toggle:hover,
+        :root[data-theme="neon"] .nav-home:hover,
+        :root[data-theme="neon"] .lang-btn:hover,
+        :root[data-theme="neon"] .account-btn:hover,
+        :root[data-theme="neon"] .btn-google:hover {
+            background: rgba(34,224,255,.14);
+            border-color: rgba(34,224,255,.65);
+            color: #ffffff; transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(34,224,255,.28), inset 0 1px 0 rgba(255,255,255,.16);
+        }
+        :root[data-theme="neon"] .btn::after,
+        :root[data-theme="neon"] .btn-ghost::after,
+        :root[data-theme="neon"] .btn-google::after {
+            content: ''; position: absolute; top: 0; left: -60%;
+            width: 45%; height: 100%; pointer-events: none;
+            background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
+            transform: skewX(-18deg);
+        }
+        :root[data-theme="neon"] .btn:hover::after,
+        :root[data-theme="neon"] .btn-ghost:hover::after,
+        :root[data-theme="neon"] .btn-google:hover::after { animation: sheen .75s ease forwards; }
+        @keyframes sheen { to { left: 125%; } }
+        :root[data-theme="neon"] .btn-danger {
+            background: rgba(255,47,185,.10); color: #ff8fb4; border-color: rgba(255,47,185,.50);
+        }
+        :root[data-theme="neon"] .btn-danger:hover {
+            background: var(--neon-pink); color: #0b0512; border-color: var(--neon-pink);
+            box-shadow: 0 0 24px rgba(255,47,185,.55);
+        }
+        :root[data-theme="neon"] .code-copy { border-color: var(--neon-cyan); color: #eaffff; }
+        :root[data-theme="neon"] .code-copy:hover {
+            background: var(--neon-cyan); color: #04121a; border-color: var(--neon-cyan);
+            box-shadow: 0 0 24px rgba(34,224,255,.55);
+        }
+        :root[data-theme="neon"] .avatar,
+        :root[data-theme="neon"] .step-num {
+            background: linear-gradient(140deg, var(--neon-cyan), var(--lime));
+            color: #04121a; box-shadow: 0 0 18px rgba(34,224,255,.45);
+        }
+        :root[data-theme="neon"] .brand-dot { box-shadow: 0 0 14px rgba(182,255,46,.85); }
+
+        /* De laptop krijgt een oplichtend scherm in plaats van een dof paneel. */
+        :root[data-theme="neon"] .laptop-screen {
+            background: radial-gradient(130% 100% at 50% 0%, #12224a 0%, #05070f 72%);
+            border-color: #26346a;
+            box-shadow: 0 0 44px rgba(34,224,255,.28), inset 0 0 44px rgba(34,224,255,.12);
+        }
+        :root[data-theme="neon"] .laptop .code-label { color: var(--neon-cyan); }
+        :root[data-theme="neon"] .laptop .code-value {
+            color: var(--lime);
+            text-shadow: 0 0 12px rgba(182,255,46,.9), 0 0 36px rgba(34,224,255,.6);
+        }
+        :root[data-theme="neon"] .lc-logo { box-shadow: 0 0 14px rgba(182,255,46,.95); }
+        :root[data-theme="neon"] .laptop-shadow {
+            background: radial-gradient(closest-side, rgba(34,224,255,.35), transparent 72%);
+        }
+
+        /* Wie beweging liever kwijt is, houdt de kleuren maar niet het drijven.
+           De kruipende lijnen blijven bewust wel lopen (zie hierboven). */
+        @media (prefers-reduced-motion: reduce) {
+            .bg-bloom, .bg-bloom .bp, .bloom-core, .bg-grid { animation: none; }
+        }
+
+        /* ---------- Studio ----------
+           De rustige, filmische stand. Geen kleurronde: hier is stilte het
+           punt. Een donkere kamer bij avond, en de inhoud springt met een
+           veertje het scherm in in plaats van zacht omhoog te schuiven. */
+        :root[data-theme="studio"] {
+            --ink: #05070b;
+            --ink-soft: #c3ccdb;
+            --surface: rgba(20, 25, 34, .74);
+            --text: #eef2f8;
+            --sand-bg: #0a0d13;
+            --sand-line: rgba(255,255,255,.15);
+            --sand-text: #9aa6ba;
+            --hairline: rgba(255,255,255,.12);
+            --grey-100: rgba(255,255,255,.10);
+            --teal-100: #cfe0f5;
+            --teal-500: #86aeda;
+            /* Rustig warmwit, en dus geen kleur die rondgaat. */
+            --heading-tint: #f4f7fc;
+            --surface-blur: rgba(9, 12, 19, .64);
+            --laptop-shell: linear-gradient(180deg, #39404d 0%, #232833 60%, #171b22 100%);
+            --laptop-edge: #0b0e13;
+            --laptop-hinge: #333a46;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.6);
+            --shadow-md: 0 14px 38px rgba(0,0,0,.6);
+            --shadow-lg: 0 44px 100px rgba(0,0,0,.75);
+        }
+        :root[data-theme="studio"] .theme-toggle .icon-studio { display: inline-flex; }
+        :root[data-theme="studio"] .theme-toggle .icon-sun { display: none; }
+
+        /* Alleen de kamer, niets van de kleurlagen. */
+        .bg-studio { display: none; }
+        :root[data-theme="studio"] .bg-studio { display: block; }
+        :root[data-theme="studio"] .bg-bloom,
+        :root[data-theme="studio"] .bg-grid,
+        :root[data-theme="studio"] .bg-flow { display: none; }
+
+        /* Alles wat elders de kleurencirkel rondgaat, staat hier stil. */
+        :root[data-theme="studio"] .brand,
+        :root[data-theme="studio"] h1,
+        :root[data-theme="studio"] h2,
+        :root[data-theme="studio"] .section-title,
+        :root[data-theme="studio"] .btn,
+        :root[data-theme="studio"] .btn-ghost,
+        :root[data-theme="studio"] .btn-small,
+        :root[data-theme="studio"] .theme-toggle,
+        :root[data-theme="studio"] .nav-home,
+        :root[data-theme="studio"] .lang-btn,
+        :root[data-theme="studio"] .code-copy,
+        :root[data-theme="studio"] .brand-dot,
+        :root[data-theme="studio"] .step-num,
+        :root[data-theme="studio"] .avatar { animation: none; }
+
+        /* Glas over de kamer, zodat de scene doorschemert zonder tekst te hinderen. */
+        :root[data-theme="studio"] .card,
+        :root[data-theme="studio"] .step,
+        :root[data-theme="studio"] .table-wrap,
+        :root[data-theme="studio"] .section-head,
+        :root[data-theme="studio"] .login-card,
+        :root[data-theme="studio"] .account-menu,
+        :root[data-theme="studio"] .lang-menu,
+        :root[data-theme="studio"] .theme-menu {
+            background: var(--surface);
+            -webkit-backdrop-filter: blur(22px) saturate(1.25);
+            backdrop-filter: blur(22px) saturate(1.25);
+            border: 1px solid var(--hairline);
+            box-shadow: var(--shadow-md);
+        }
+        :root[data-theme="studio"] .login-card { box-shadow: var(--shadow-lg); }
+        :root[data-theme="studio"] .login-card::after {
+            background: radial-gradient(closest-side, rgba(255,180,92,.14), transparent);
+        }
+        :root[data-theme="studio"] .code-panel,
+        :root[data-theme="studio"] .logbox { background: rgba(4,6,11,.82); border: 1px solid var(--hairline); }
+        :root[data-theme="studio"] th { background: rgba(255,255,255,.05); color: var(--sand-text); }
+        :root[data-theme="studio"] .info { background: rgba(134,174,218,.12); color: var(--ink-soft); border: 1px solid rgba(134,174,218,.24); }
+        :root[data-theme="studio"] .notice { background: rgba(255,90,110,.12); color: #ffb9c2; border-color: rgba(255,90,110,.42); }
+        :root[data-theme="studio"] .btn-danger { background: rgba(255,90,110,.10); color: #ffb9c2; border-color: rgba(255,90,110,.45); }
+        :root[data-theme="studio"] .btn-danger:hover { background: #e5455e; color: #0a0d13; border-color: #e5455e; }
+        :root[data-theme="studio"] .status-ok, :root[data-theme="studio"] .pill-ok { background: rgba(60,220,140,.13); color: #82e9b6; }
+        :root[data-theme="studio"] .status-warn, :root[data-theme="studio"] .pill-warn { background: rgba(255,190,80,.13); color: #ffd489; }
+        :root[data-theme="studio"] .status-err, :root[data-theme="studio"] .pill-err { background: rgba(255,90,110,.13); color: #ffb9c2; }
+        :root[data-theme="studio"] input[type="email"],
+        :root[data-theme="studio"] input[type="text"],
+        :root[data-theme="studio"] input[type="date"] {
+            background: rgba(6,9,15,.72); border-color: var(--sand-line); color: var(--text);
+        }
+        :root[data-theme="studio"] input:focus { border-color: #ffb45c; box-shadow: 0 0 0 3px rgba(255,180,92,.26); }
+        :root[data-theme="studio"] .btn-ghost:hover,
+        :root[data-theme="studio"] .btn-small:hover,
+        :root[data-theme="studio"] .theme-toggle:hover,
+        :root[data-theme="studio"] .nav-home:hover,
+        :root[data-theme="studio"] .lang-btn:hover,
+        :root[data-theme="studio"] .account-btn:hover,
+        :root[data-theme="studio"] .section-head:hover,
+        :root[data-theme="studio"] .account-menu a:hover,
+        :root[data-theme="studio"] .lang-menu a:hover,
+        :root[data-theme="studio"] .theme-menu button:hover { background: rgba(255,255,255,.07); }
+        :root[data-theme="studio"] .account-menu a.danger { color: #ffb9c2; }
+        :root[data-theme="studio"] .laptop-screen {
+            background: radial-gradient(130% 100% at 50% 0%, #16213a 0%, #05070b 72%);
+            border-color: #202737;
+            box-shadow: 0 0 46px rgba(140,180,240,.20), inset 0 0 44px rgba(140,180,240,.09);
+        }
+
+        /* ---------- De kamer beweegt ----------
+           Alles hier is een opacity- of transform-animatie: geen filters op
+           grote vlakken, dus de scene kost de browser vrijwel niets. */
+        .bg-studio { animation: st-breathe 34s ease-in-out infinite alternate; }
+        @keyframes st-breathe {
+            from { transform: scale(1.02) translate3d(-.4%, .2%, 0); }
+            to   { transform: scale(1.06) translate3d(.4%, -.3%, 0); }
+        }
+        /* Stadslichten: vier ritmes door elkaar, zodat er geen patroon in zit. */
+        .bg-studio .tw { animation: st-twinkle 5s ease-in-out infinite alternate; }
+        .bg-studio .tw.b { animation-duration: 7s; animation-delay: -2s; }
+        .bg-studio .tw.c { animation-duration: 9s; animation-delay: -5s; }
+        .bg-studio .tw.d { animation-duration: 6.5s; animation-delay: -3.5s; }
+        @keyframes st-twinkle { from { opacity: .35; } to { opacity: 1; } }
+        /* Het scherm ademt licht, zoals een echt scherm dat aanstaat. */
+        .bg-studio .st-screen { animation: st-glow 7s ease-in-out infinite alternate; }
+        @keyframes st-glow { from { opacity: .82; } to { opacity: 1; } }
+        /* Knipperende cursor in de tekst op het scherm. */
+        .bg-studio .st-caret { animation: st-blink 1.15s steps(1, end) infinite; }
+        @keyframes st-blink { 0%, 50% { opacity: .55; } 51%, 100% { opacity: 0; } }
+        /* Stoom: stijgt op en lost op, elk sliertje net iets anders.
+           Alleen verschuiven en vervagen, geen schaal: schalen in een SVG gaat
+           om een oorsprong die per element anders ligt, en dan glijdt het
+           sliertje zijwaarts weg in plaats van recht omhoog te stijgen. */
+        .bg-studio .st-steam path { opacity: 0; animation: st-steam 6s ease-in-out infinite; }
+        .bg-studio .st-steam .s2 { animation-delay: -2s; }
+        .bg-studio .st-steam .s3 { animation-delay: -4s; }
+        @keyframes st-steam {
+            0%   { opacity: 0; transform: translateY(8px); }
+            30%  { opacity: .34; }
+            100% { opacity: 0; transform: translateY(-48px); }
+        }
+        /* transform-box en beide keyframes staan er expliciet bij: zonder dat
+           zou de browser moeten mengen tussen een SVG-transformatieattribuut en
+           een CSS-transform, en dat loopt niet vloeiend. */
+        .bg-studio .st-sweep {
+            transform-box: view-box; transform-origin: 800px 450px;
+            animation: st-sweep 26s linear infinite;
+        }
+        @keyframes st-sweep {
+            from { transform: rotate(14deg) translateX(0); }
+            to   { transform: rotate(14deg) translateX(2900px); }
+        }
+        .bg-studio .st-motes circle { animation: st-mote 13s ease-in-out infinite alternate; }
+        .bg-studio .st-motes .m2 { animation-duration: 17s; animation-delay: -6s; }
+        .bg-studio .st-motes .m3 { animation-duration: 21s; animation-delay: -11s; }
+        @keyframes st-mote {
+            from { transform: translate3d(0, 0, 0); opacity: .18; }
+            to   { transform: translate3d(-26px, -40px, 0); opacity: .6; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .bg-studio, .bg-studio * { animation: none; }
+        }
+
+        /* ---------- De entree in studio ----------
+           Elders komt inhoud zacht omhoog; hier springt hij het scherm in.
+           Dat zit hem in de cubic-bezier: de derde waarde boven 1 laat de
+           beweging voorbij het eindpunt schieten en terugveren. Vandaar dat
+           de schaal ook kleiner begint -- zonder dat verschil valt er niets
+           te veren. */
+        :root[data-theme="studio"].js-reveal .hero > *,
+        :root[data-theme="studio"].js-reveal .card,
+        :root[data-theme="studio"].js-reveal .section,
+        :root[data-theme="studio"].js-reveal .laptop-block,
+        :root[data-theme="studio"].js-reveal .login-card {
+            transform: translateY(44px) scale(.88);
+            transition: opacity .42s cubic-bezier(.2,.7,.3,1),
+                        transform .78s cubic-bezier(.34,1.56,.64,1);
+        }
+
+        @media (max-width: 640px) {
             .topbar { padding: 12px 16px; }
-            .topbar .knop { padding: 10px 16px; font-size: 14px; }
-            .merk span { display: none; }
+            .page { padding: 32px 16px 72px; }
+            .card { padding: 24px; }
+            .code-panel { padding: 22px; }
+            .login-card { padding: 32px 22px; min-height: min(80vh, 560px); }
+            .account-name { display: none; }
+            .account-btn { padding: 5px; }
+            .nav-home-label { display: none; }
+            .nav-home { padding: 10px; }
         }
-        @media (max-width: 520px) {
+    
+    </style>
+    <style>
+        /* ---------- Helpdesk-chat binnen het inlogpaneel ---------- */
+        .helpdesk-card { gap: 12px; }
+        .chat { width: 100%; max-width: 760px; margin: 10px auto 0; display: flex; flex-direction: column; gap: 12px; text-align: left; position: relative; z-index: 1; }
+        .berichten {
+            height: clamp(240px, 34vh, 440px); overflow-y: auto;
+            display: flex; flex-direction: column; gap: 10px;
+            padding: 18px; border-radius: var(--r);
+            background: var(--surface-blur); border: 1px solid var(--hairline);
+        }
+        .bericht { max-width: 85%; padding: 11px 16px; border-radius: 20px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; letter-spacing: -.01em; }
+        .bericht.bot { align-self: flex-start; background: var(--surface); color: var(--text); border: 1px solid var(--hairline); border-bottom-left-radius: 6px; }
+        .bericht.gebruiker { align-self: flex-end; background: var(--lime); color: var(--ink); font-weight: 600; border-bottom-right-radius: 6px; }
+        :root[data-theme="neon"] .bericht.gebruiker { background: linear-gradient(118deg, var(--neon-cyan) 0%, var(--lime) 54%, #f4ff5a 100%); color: #04121a; }
+        .opties { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; }
+        .opties .btn, .opties .btn-ghost { padding: 9px 18px; font-size: .95rem; }
+        .opties button:disabled { opacity: .4; cursor: default; }
+        .opties button.gekozen:disabled { opacity: 1; }
+        .invoer { display: flex; gap: 10px; }
+        .invoer input[type="text"] { flex: 1; }
+        .invoer input:disabled { opacity: .55; }
+        .invoer .btn:disabled { opacity: .5; cursor: default; }
+        @media (max-width: 600px) {
+            .berichten { height: 52vh; height: 52dvh; padding: 12px; }
             .bericht { max-width: 92%; }
-            .chat-kop small { display: none; }
         }
     </style>
+    {% endverbatim %}
 </head>
 <body>
+    {% verbatim %}
+    <div class="bg-lines" aria-hidden="true">
+        <!-- De bloem: tien bladen die vanuit het midden naar buiten waaieren.
+             Per blad staan alleen de hoek (--a), de maat (--w/--h) en het ritme
+             (--t/--d) hier; de vorm en de kleur komen uit de CSS. -->
+        <div class="bg-bloom">
+            <span class="bp c-blue"   style="--a:-100deg;--w:62vmax;--h:15vmax;--t:19s;--d:-2s"></span>
+            <span class="bp c-violet" style="--a:-62deg;--w:54vmax;--h:20vmax;--t:23s;--d:-7s"></span>
+            <span class="bp c-blue"   style="--a:-22deg;--w:66vmax;--h:14vmax;--t:17s;--d:-11s"></span>
+            <span class="bp c-pink"   style="--a:14deg;--w:50vmax;--h:22vmax;--t:21s;--d:-4s"></span>
+            <span class="bp c-violet" style="--a:52deg;--w:60vmax;--h:16vmax;--t:25s;--d:-14s"></span>
+            <span class="bp c-blue"   style="--a:96deg;--w:46vmax;--h:18vmax;--t:18s;--d:-9s"></span>
+            <span class="bp c-pink"   style="--a:140deg;--w:58vmax;--h:13vmax;--t:22s;--d:-1s"></span>
+            <span class="bp c-violet" style="--a:186deg;--w:52vmax;--h:19vmax;--t:20s;--d:-16s"></span>
+            <span class="bp c-blue"   style="--a:232deg;--w:64vmax;--h:15vmax;--t:24s;--d:-6s"></span>
+            <span class="bp c-pink"   style="--a:284deg;--w:48vmax;--h:17vmax;--t:19s;--d:-12s"></span>
+            <span class="bloom-core"></span>
+        </div>
+        <div class="bg-grid"></div>
+
+        <!-- ---------- Studio: een bureau bij avond ----------
+             Alles is vector, geen foto. Dat is hier bewust: een tekening is op
+             elk scherm even scherp, dus op 4K net zo strak als op een telefoon,
+             terwijl een foto op de ene maat altijd te klein of te groot is.
+             Bovendien kan hij bewegen -- de stadslichten pinkeren, het
+             laptopscherm ademt, er stijgt stoom op en er drijft licht door de
+             kamer. De scherm-vullende uitsnede is 'slice', zodat de compositie
+             klopt en er alleen buiten beeld valt wat niet essentieel is. -->
+        <svg class="bg-studio" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+                <linearGradient id="stRoom" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#0a0d13"/>
+                    <stop offset="0.6" stop-color="#111620"/>
+                    <stop offset="1" stop-color="#07090d"/>
+                </linearGradient>
+                <linearGradient id="stSky" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#101c33"/>
+                    <stop offset="0.5" stop-color="#1e2c48"/>
+                    <stop offset="1" stop-color="#42364f"/>
+                </linearGradient>
+                <radialGradient id="stMoon">
+                    <stop offset="0" stop-color="#dfe9ff" stop-opacity=".30"/>
+                    <stop offset="1" stop-color="#dfe9ff" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="stLamp">
+                    <stop offset="0" stop-color="#ffb45c" stop-opacity=".50"/>
+                    <stop offset="1" stop-color="#ffb45c" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="stCone" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#ffc274" stop-opacity=".26"/>
+                    <stop offset="1" stop-color="#ffc274" stop-opacity="0"/>
+                </linearGradient>
+                <radialGradient id="stScreen" cx="50%" cy="34%">
+                    <stop offset="0" stop-color="#cfe2ff" stop-opacity=".92"/>
+                    <stop offset="1" stop-color="#4f83cf" stop-opacity=".28"/>
+                </radialGradient>
+                <radialGradient id="stSpill">
+                    <stop offset="0" stop-color="#9dc4f5" stop-opacity=".30"/>
+                    <stop offset="1" stop-color="#9dc4f5" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="stDesk" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#2b2119"/>
+                    <stop offset="1" stop-color="#120d09"/>
+                </linearGradient>
+                <linearGradient id="stSweep" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stop-color="#cfe2ff" stop-opacity="0"/>
+                    <stop offset="0.5" stop-color="#cfe2ff" stop-opacity=".055"/>
+                    <stop offset="1" stop-color="#cfe2ff" stop-opacity="0"/>
+                </linearGradient>
+                <!-- Sluier zodat de tekst leesbaar blijft: dicht bovenin waar de
+                     kop staat, open onderin waar het bureau te zien is. -->
+                <linearGradient id="stScrim" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#06080c" stop-opacity=".80"/>
+                    <stop offset="0.55" stop-color="#06080c" stop-opacity=".46"/>
+                    <stop offset="1" stop-color="#06080c" stop-opacity=".22"/>
+                </linearGradient>
+                <radialGradient id="stVig" cx="50%" cy="46%">
+                    <stop offset="0.42" stop-color="#000000" stop-opacity="0"/>
+                    <stop offset="1" stop-color="#000000" stop-opacity=".70"/>
+                </radialGradient>
+            </defs>
+
+            <rect width="1600" height="900" fill="url(#stRoom)"/>
+
+            <!-- Raam met de stad erachter -->
+            <g class="st-far">
+                <rect x="965" y="80" width="545" height="480" fill="url(#stSky)"/>
+                <circle cx="1400" cy="176" r="110" fill="url(#stMoon)"/>
+                <circle cx="1400" cy="176" r="27" fill="#e9efff" opacity=".5"/>
+                <g fill="#080d17">
+                    <rect x="972" y="352" width="74" height="208"/>
+                    <rect x="1054" y="300" width="58" height="260"/>
+                    <rect x="1120" y="392" width="86" height="168"/>
+                    <rect x="1214" y="262" width="66" height="298"/>
+                    <rect x="1288" y="368" width="52" height="192"/>
+                    <rect x="1348" y="316" width="78" height="244"/>
+                    <rect x="1434" y="404" width="70" height="156"/>
+                </g>
+                <g class="st-lights" fill="#ffd48c">
+                    <rect class="tw a" x="984" y="372" width="9" height="12"/>
+                    <rect class="tw b" x="1006" y="400" width="9" height="12"/>
+                    <rect class="tw c" x="1028" y="372" width="9" height="12"/>
+                    <rect class="tw d" x="984" y="430" width="9" height="12"/>
+                    <rect class="tw b" x="1028" y="458" width="9" height="12"/>
+                    <rect class="tw a" x="1066" y="320" width="9" height="12"/>
+                    <rect class="tw c" x="1088" y="348" width="9" height="12"/>
+                    <rect class="tw d" x="1066" y="404" width="9" height="12"/>
+                    <rect class="tw a" x="1088" y="462" width="9" height="12"/>
+                    <rect class="tw b" x="1134" y="412" width="9" height="12"/>
+                    <rect class="tw c" x="1168" y="440" width="9" height="12"/>
+                    <rect class="tw d" x="1134" y="486" width="9" height="12"/>
+                    <rect class="tw a" x="1226" y="282" width="9" height="12"/>
+                    <rect class="tw c" x="1252" y="310" width="9" height="12"/>
+                    <rect class="tw b" x="1226" y="366" width="9" height="12"/>
+                    <rect class="tw d" x="1252" y="424" width="9" height="12"/>
+                    <rect class="tw a" x="1298" y="388" width="9" height="12"/>
+                    <rect class="tw b" x="1318" y="444" width="9" height="12"/>
+                    <rect class="tw c" x="1360" y="336" width="9" height="12"/>
+                    <rect class="tw d" x="1388" y="380" width="9" height="12"/>
+                    <rect class="tw a" x="1360" y="452" width="9" height="12"/>
+                    <rect class="tw b" x="1446" y="424" width="9" height="12"/>
+                    <rect class="tw c" x="1472" y="470" width="9" height="12"/>
+                </g>
+                <g stroke="#05070b" stroke-width="12" fill="none">
+                    <rect x="965" y="80" width="545" height="480"/>
+                    <line x1="1237" y1="80" x2="1237" y2="560"/>
+                    <line x1="965" y1="320" x2="1510" y2="320"/>
+                </g>
+            </g>
+
+            <!-- Plant links, alleen als silhouet -->
+            <g fill="#0c1118" class="st-plant">
+                <path d="M150 620 L206 620 L196 730 L160 730 Z"/>
+                <path d="M178 620 C 178 560, 128 540, 116 498 C 158 512, 180 552, 178 596 Z"/>
+                <path d="M178 620 C 178 548, 226 522, 240 476 C 250 528, 216 574, 178 604 Z"/>
+                <path d="M178 618 C 168 574, 196 536, 188 500 C 214 534, 206 582, 186 618 Z"/>
+            </g>
+
+            <!-- Bureau -->
+            <rect x="0" y="622" width="1600" height="278" fill="url(#stDesk)"/>
+            <rect x="0" y="622" width="1600" height="2" fill="#6a5136" opacity=".55"/>
+
+            <!-- Bureaulamp rechts, met haar lichtkegel en de plas licht eronder -->
+            <g class="st-lamp">
+                <polygon points="1214,470 1286,470 1400,622 1100,622" fill="url(#stCone)"/>
+                <ellipse cx="1250" cy="628" rx="230" ry="72" fill="url(#stLamp)"/>
+                <path d="M1206 470 L1294 470 L1272 432 L1228 432 Z" fill="#1b212b"/>
+                <rect x="1246" y="432" width="8" height="0" fill="none"/>
+                <path d="M1250 432 L1250 380 L1170 356" stroke="#1b212b" stroke-width="9" fill="none" stroke-linecap="round"/>
+                <rect x="1140" y="350" width="62" height="12" rx="5" fill="#1b212b"/>
+                <ellipse cx="1250" cy="472" rx="40" ry="7" fill="#ffcf8a" opacity=".55"/>
+            </g>
+
+            <!-- Koffie met stoom -->
+            <g class="st-cup">
+                <path d="M352 566 L432 566 L424 626 L360 626 Z" fill="#161c25"/>
+                <path d="M432 578 C 458 578, 458 606, 430 606" stroke="#161c25" stroke-width="8" fill="none"/>
+                <ellipse cx="392" cy="566" rx="40" ry="8" fill="#232b37"/>
+                <g class="st-steam" stroke="#cfe2ff" stroke-width="4" fill="none" stroke-linecap="round">
+                    <path class="s1" d="M378 548 C 366 528, 390 516, 378 494"/>
+                    <path class="s2" d="M396 548 C 384 524, 410 512, 398 488"/>
+                    <path class="s3" d="M414 548 C 402 530, 424 518, 412 498"/>
+                </g>
+            </g>
+
+            <!-- De laptop, het hart van de scene -->
+            <g class="st-laptop">
+                <ellipse cx="640" cy="640" rx="270" ry="60" fill="url(#stSpill)"/>
+                <path d="M500 366 L768 366 L780 600 L488 600 Z" fill="#1a1f28"/>
+                <path class="st-screen" d="M514 380 L754 380 L764 586 L504 586 Z" fill="url(#stScreen)"/>
+                <g opacity=".35" fill="#0a1220">
+                    <rect x="536" y="404" width="150" height="9" rx="4"/>
+                    <rect x="536" y="428" width="196" height="9" rx="4"/>
+                    <rect x="536" y="452" width="120" height="9" rx="4"/>
+                    <rect x="536" y="494" width="176" height="9" rx="4"/>
+                    <rect x="536" y="518" width="98" height="9" rx="4"/>
+                </g>
+                <rect class="st-caret" x="646" y="516" width="4" height="13" fill="#0a1220" opacity=".55"/>
+                <path d="M470 600 L798 600 L848 652 L420 652 Z" fill="#252b36"/>
+                <path d="M498 610 L770 610 L804 642 L464 642 Z" fill="#1b212a"/>
+                <rect x="596" y="645" width="76" height="5" rx="2" fill="#39404d"/>
+            </g>
+
+            <!-- Licht dat traag door de kamer trekt -->
+            <rect class="st-sweep" x="-700" y="-200" width="560" height="1300" fill="url(#stSweep)"/>
+
+            <!-- Stofjes in het lamplicht -->
+            <g class="st-motes" fill="#ffd9a8">
+                <circle class="m1" cx="1180" cy="560" r="2.5"/>
+                <circle class="m2" cx="1256" cy="520" r="2"/>
+                <circle class="m3" cx="1322" cy="574" r="2.5"/>
+                <circle class="m2" cx="1214" cy="596" r="1.8"/>
+                <circle class="m1" cx="1300" cy="500" r="2"/>
+                <circle class="m3" cx="1150" cy="516" r="1.8"/>
+            </g>
+
+            <rect width="1600" height="900" fill="url(#stScrim)"/>
+            <rect width="1600" height="900" fill="url(#stVig)"/>
+        </svg>
+
+        <svg class="bg-flow" viewBox="0 0 1440 900" preserveAspectRatio="none">
+            <defs>
+                <!-- De stoppunten hebben hier geen vaste kleur: die komt uit de
+                     animatie 'spectrum' in de CSS, zodat het verloop blijft
+                     doorkleuren. Een vaste startkleur staat er in de CSS bij. -->
+                <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+                    <stop class="gs gs1" offset="0"/>
+                    <stop class="gs gs2" offset="0.5"/>
+                    <stop class="gs gs3" offset="1"/>
+                </linearGradient>
+            </defs>
+            <!-- Elke lichtstreep is een paar: .tail (lange, vage staart) en
+                 .head (korte felle kop) op exact hetzelfde pad. --t is de
+                 rondetijd, --d het startpunt in de lus. -->
+            <path class="tail"     pathLength="100" style="--t:15s;--d:-2s"    d="M-200 30 C 140 -20, 320 90, 540 30 S 960 -30, 1200 50 S 1520 10, 1660 40"/>
+            <path class="head"     pathLength="100" style="--t:15s;--d:-2s"    d="M-200 30 C 140 -20, 320 90, 540 30 S 960 -30, 1200 50 S 1520 10, 1660 40"/>
+
+            <path class="dots"     pathLength="100" style="--t:19s;--d:-7s"    d="M-200 150 C 150 100, 350 210, 560 150 S 980 90, 1240 170 S 1520 130, 1660 150"/>
+
+            <path class="tail rev" pathLength="100" style="--t:21s;--d:-11s"   d="M-200 275 C 150 220, 360 340, 580 275 S 1000 210, 1250 295 S 1530 250, 1660 275"/>
+            <path class="head rev" pathLength="100" style="--t:21s;--d:-11s"   d="M-200 275 C 150 220, 360 340, 580 275 S 1000 210, 1250 295 S 1530 250, 1660 275"/>
+
+            <path class="dots-sm"  pathLength="100" style="--t:13s;--d:-3.5s"  d="M-200 395 C 140 340, 340 460, 560 395 S 980 325, 1240 415 S 1520 370, 1660 395"/>
+
+            <path class="tail"     pathLength="100" style="--t:11s;--d:-6s"    d="M-200 455 C 180 400, 380 520, 620 455 S 1040 385, 1280 475 S 1560 430, 1660 455"/>
+            <path class="head"     pathLength="100" style="--t:11s;--d:-6s"    d="M-200 455 C 180 400, 380 520, 620 455 S 1040 385, 1280 475 S 1560 430, 1660 455"/>
+
+            <path class="dots rev" pathLength="100" style="--t:24s;--d:-9s"    d="M-200 575 C 170 520, 380 640, 600 575 S 1020 505, 1270 595 S 1550 550, 1660 575"/>
+
+            <path class="tail"     pathLength="100" style="--t:17s;--d:-13s"   d="M-200 695 C 180 640, 380 760, 620 695 S 1040 625, 1280 715 S 1560 670, 1660 695"/>
+            <path class="head"     pathLength="100" style="--t:17s;--d:-13s"   d="M-200 695 C 180 640, 380 760, 620 695 S 1040 625, 1280 715 S 1560 670, 1660 695"/>
+
+            <path class="dots-sm rev" pathLength="100" style="--t:16s;--d:-1s" d="M-200 755 C 150 700, 360 820, 580 755 S 1000 685, 1250 775 S 1530 730, 1660 755"/>
+
+            <path class="tail rev" pathLength="100" style="--t:26s;--d:-18s"   d="M-200 870 C 150 815, 360 930, 580 865 S 1000 800, 1250 885 S 1530 840, 1660 865"/>
+            <path class="head rev" pathLength="100" style="--t:26s;--d:-18s"   d="M-200 870 C 150 815, 360 930, 580 865 S 1000 800, 1250 885 S 1530 840, 1660 865"/>
+        </svg>
+    </div>
+
     <header class="topbar">
-        <div class="merk"><svg role="img" aria-label="Handpicked" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 949.19 157.64"><defs><style>
-      .cls-1 {
-        fill: currentColor;
-        stroke-width: 0px;
-      }
-    </style></defs><polygon class="cls-1" points="80.49 52.37 21.78 52.37 21.78 3.08 0 3.08 0 127.76 21.78 127.76 21.78 73.27 80.49 73.27 80.49 127.76 102.27 127.76 102.27 3.08 80.49 3.08 80.49 52.37"/><path class="cls-1" d="m187.87,53.77c-3.08-4.67-7-8.38-11.69-11.04-5.24-2.98-11.4-4.49-18.28-4.49-7.6,0-14.71,2.05-21.13,6.09-6.41,4.04-11.53,9.6-15.2,16.54-3.67,6.93-5.54,14.59-5.54,22.77s1.86,16.01,5.54,22.95c3.68,6.94,8.79,12.51,15.2,16.54,6.42,4.04,13.53,6.09,21.13,6.09,6.89,0,13.04-1.51,18.28-4.49,4.69-2.66,8.61-6.37,11.69-11.04v13.76h20.9V40.01h-20.9v13.76Zm-51.29,29.87c0-4.58,1.13-8.88,3.37-12.78,2.23-3.89,5.34-7.03,9.24-9.33,3.89-2.29,8.25-3.45,12.95-3.45s9.24,1.13,13.13,3.37c3.89,2.23,7,5.34,9.23,9.23,2.23,3.9,3.37,8.25,3.37,12.96s-1.13,9.24-3.37,13.13c-2.23,3.89-5.34,7-9.23,9.23-3.9,2.23-8.31,3.37-13.13,3.37s-9.06-1.16-12.95-3.45c-3.9-2.29-7-5.43-9.24-9.32h0c-2.23-3.89-3.37-8.25-3.37-12.96Z"/><path class="cls-1" d="m273.93,38.25c-5.73,0-10.96,1.36-15.55,4.05-4.03,2.35-7.39,5.64-10,9.79v-12.08h-20.73v87.44h20.73v-47.34c0-6.64,1.91-12,5.67-15.94,3.75-3.92,8.84-5.91,15.12-5.91s10.98,1.99,14.68,5.91c3.7,3.93,5.58,9.3,5.58,15.94v47.34h20.9v-49.81c0-12.09-3.29-21.78-9.77-28.8-6.5-7.03-15.45-10.6-26.63-10.6Z"/><path class="cls-1" d="m394.67,53.77c-3.08-4.67-7-8.38-11.69-11.04-5.24-2.98-11.4-4.49-18.28-4.49-7.6,0-14.71,2.05-21.13,6.09-6.41,4.04-11.53,9.6-15.2,16.54-3.67,6.93-5.54,14.59-5.54,22.77s1.86,16.01,5.54,22.95c3.68,6.94,8.79,12.51,15.2,16.54,6.42,4.04,13.52,6.09,21.13,6.09,6.89,0,13.04-1.51,18.28-4.49,4.69-2.66,8.61-6.37,11.69-11.04v13.76h20.9V2.77h-20.9v51.01Zm-51.29,29.87c0-4.58,1.13-8.88,3.37-12.78,2.24-3.89,5.34-7.03,9.24-9.33,3.89-2.29,8.25-3.45,12.95-3.45s9.24,1.13,13.13,3.37c3.89,2.23,7,5.34,9.23,9.23,2.23,3.9,3.37,8.25,3.37,12.96s-1.13,9.24-3.37,13.13c-2.23,3.89-5.34,7-9.23,9.23-3.9,2.23-8.32,3.37-13.13,3.37s-9.06-1.16-12.95-3.45c-3.9-2.29-7-5.43-9.24-9.32h0c-2.23-3.89-3.37-8.25-3.37-12.96Z"/><path class="cls-1" d="m506.41,44.43c-6.36-4.1-13.44-6.18-21.05-6.18-7.01,0-13.22,1.54-18.46,4.58-4.68,2.71-8.61,6.5-11.68,11.27v-14.08h-20.73v117.63h20.73v-44.26c3.07,4.77,7,8.55,11.68,11.27,5.24,3.04,11.45,4.58,18.46,4.58,7.61,0,14.69-2.05,21.04-6.09,6.35-4.03,11.46-9.6,15.2-16.54,3.73-6.93,5.63-14.6,5.63-22.77s-1.89-15.84-5.63-22.77c-3.73-6.93-8.85-12.53-15.2-16.62Zm-51.19,39.4c0-4.82,1.13-9.24,3.37-13.13,2.24-3.89,5.37-7,9.32-9.23,3.95-2.24,8.4-3.37,13.22-3.37s9.05,1.16,12.95,3.45c3.9,2.3,7.01,5.43,9.24,9.33,2.23,3.9,3.37,8.26,3.37,12.96s-1.13,8.89-3.37,12.78c-2.23,3.89-5.34,7.03-9.24,9.32-3.89,2.29-8.25,3.45-12.95,3.45s-9.27-1.13-13.22-3.37c-3.95-2.23-7.09-5.34-9.32-9.23h0c-2.23-3.89-3.37-8.25-3.37-12.96Z"/><path class="cls-1" d="m551.35,0c-3.55,0-6.66,1.33-9.23,3.97-2.57,2.63-3.87,5.76-3.87,9.31s1.3,6.66,3.87,9.23c2.57,2.57,5.67,3.87,9.23,3.87s6.83-1.3,9.4-3.87c2.57-2.57,3.87-5.67,3.87-9.23s-1.3-6.68-3.87-9.31c-2.57-2.63-5.74-3.97-9.41-3.97Z"/><rect class="cls-1" x="540.9" y="40.07" width="20.73" height="87.44"/><path class="cls-1" d="m607.94,61.94c3.72-2.23,7.92-3.36,12.51-3.36,4.92,0,9.39,1.28,13.28,3.79,3.86,2.5,6.33,5.71,7.35,9.55l.11.42h21.21l-.09-.64c-.84-6.19-3.28-11.9-7.27-16.96-3.98-5.05-9.07-9.05-15.12-11.9-6.05-2.85-12.6-4.29-19.48-4.29-8.42,0-16.15,2.01-22.97,5.99-6.82,3.98-12.3,9.51-16.27,16.45-3.97,6.94-5.99,14.72-5.99,23.14s2.01,16.2,5.99,23.14c3.97,6.94,9.45,12.45,16.27,16.36,6.82,3.91,14.55,5.9,22.96,5.9,6.99,0,13.63-1.44,19.74-4.29,6.12-2.85,11.21-6.92,15.13-12.09,3.93-5.18,6.28-11.06,7-17.49l.07-.63h-21.02l-.11.43c-1.02,4.08-3.52,7.47-7.44,10.08-3.94,2.63-8.44,3.96-13.36,3.96-4.58,0-8.79-1.13-12.51-3.36-3.73-2.23-6.72-5.31-8.89-9.15-2.18-3.84-3.28-8.16-3.28-12.87s1.1-9.06,3.28-12.96c2.18-3.89,5.17-7,8.89-9.23Z"/><polygon class="cls-1" points="756.37 40.32 730.27 40.32 696.13 76.7 696.13 3.08 675.4 3.08 675.4 127.77 696.13 127.77 696.13 87.91 732.02 127.77 759.01 127.77 716.11 82.37 756.37 40.32"/><path class="cls-1" d="m822.79,44.19c-6.47-3.74-13.66-5.64-21.38-5.64-8.3,0-15.97,2.01-22.79,5.99-6.82,3.98-12.29,9.48-16.27,16.36-3.97,6.88-5.99,14.57-5.99,22.88s2.01,16.23,5.99,23.23c3.97,7,9.48,12.57,16.36,16.54,6.87,3.97,14.63,5.99,23.05,5.99,10.78,0,20.04-2.8,27.52-8.32,7.5-5.54,12.09-13.05,13.64-22.34l.11-.66h-20.55l-.09.45c-.79,3.82-3.11,6.97-6.89,9.34-3.83,2.4-8.51,3.62-13.91,3.62-6.89,0-12.7-2.12-17.27-6.29-4.44-4.05-7.2-9.45-8.2-16.05h67.49l.38-7.98c0-7.95-1.93-15.26-5.73-21.73-3.8-6.47-9.01-11.65-15.47-15.38Zm-37.19,16.83c4.17-3.14,9.26-4.74,15.1-4.74s10.46,1.74,14.46,5.16c3.82,3.28,6.11,7.45,6.79,12.42h-44.69c1.53-5.51,4.34-9.82,8.34-12.84Z"/><path class="cls-1" d="m928.29,3.08v51.01c-3.08-4.67-7-8.38-11.69-11.04-5.24-2.98-11.4-4.49-18.28-4.49-7.6,0-14.71,2.05-21.13,6.09-6.41,4.04-11.53,9.6-15.2,16.54-3.67,6.93-5.54,14.59-5.54,22.77s1.86,16.01,5.54,22.95c3.68,6.94,8.79,12.51,15.2,16.54,6.42,4.04,13.52,6.09,21.13,6.09,6.89,0,13.04-1.51,18.28-4.49,4.69-2.66,8.61-6.37,11.69-11.04v13.76h20.9V3.08h-20.9Zm-51.29,80.88c0-4.58,1.13-8.88,3.37-12.78,2.24-3.89,5.34-7.03,9.24-9.33,3.9-2.29,8.25-3.45,12.95-3.45s9.24,1.13,13.13,3.37c3.89,2.23,7,5.34,9.23,9.23,2.23,3.9,3.37,8.26,3.37,12.96s-1.13,9.24-3.37,13.13c-2.23,3.89-5.34,7-9.23,9.23-3.9,2.23-8.31,3.37-13.13,3.37s-9.06-1.16-12.95-3.45c-3.9-2.29-7-5.43-9.24-9.32h0c-2.23-3.89-3.37-8.25-3.37-12.96Z"/></svg><span>ICT Helpdesk</span></div>
-        <button class="knop knop-ghost" type="button" id="opnieuw">Nieuwe melding</button>
+        <a href="/" class="brand"><span class="brand-dot"></span> Handpicked Access</a>
+        <div class="topbar-actions">
+            <button class="lang-btn" type="button" id="opnieuw">Nieuwe melding</button>
+            
+            <div class="theme"><button class="theme-toggle" type="button" aria-label="Thema kiezen" title="Thema kiezen"><span class="icon-neon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8l1.9 5.1a4 4 0 0 0 2.37 2.37L21.36 11l-5.09 1.9a4 4 0 0 0-2.37 2.37L12 20.36l-1.9-5.09a4 4 0 0 0-2.37-2.37L2.64 11l5.09-1.9A4 4 0 0 0 10.1 6.9L12 1.8zM19.4 15.6l.72 1.93 1.93.72-1.93.72-.72 1.93-.72-1.93-1.93-.72 1.93-.72.72-1.93zM4.6 2.2l.62 1.66 1.66.62-1.66.62L4.6 6.76 3.98 5.1 2.32 4.48l1.66-.62L4.6 2.2z"/></svg></span><span class="icon-studio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"/></svg></span></button><div class="theme-menu" role="group" aria-label="Thema kiezen"><button type="button" aria-pressed="false" data-set="neon" onclick="setTheme('neon')"><span class="tm-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8l1.9 5.1a4 4 0 0 0 2.37 2.37L21.36 11l-5.09 1.9a4 4 0 0 0-2.37 2.37L12 20.36l-1.9-5.09a4 4 0 0 0-2.37-2.37L2.64 11l5.09-1.9A4 4 0 0 0 10.1 6.9L12 1.8zM19.4 15.6l.72 1.93 1.93.72-1.93.72-.72 1.93-.72-1.93-1.93-.72 1.93-.72.72-1.93zM4.6 2.2l.62 1.66 1.66.62-1.66.62L4.6 6.76 3.98 5.1 2.32 4.48l1.66-.62L4.6 2.2z"/></svg></span><span class="tm-label">Neon</span><span class="tm-tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.55 17.6l-4.6-4.6 1.42-1.41 3.18 3.18 8.08-8.08 1.42 1.41z"/></svg></span></button><button type="button" aria-pressed="false" data-set="studio" onclick="setTheme('studio')"><span class="tm-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"/></svg></span><span class="tm-label">Studio</span><span class="tm-tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.55 17.6l-4.6-4.6 1.42-1.41 3.18 3.18 8.08-8.08 1.42 1.41z"/></svg></span></button></div></div>
+            
+        </div>
     </header>
+    {% endverbatim %}
 
-    <main class="indeling">
-        <section class="chat" aria-label="Helpdesk-chat">
-            <div class="chat-kop">
-                <span class="status-stip" aria-hidden="true"></span>
-                <h1>ICT-melding</h1>
-                <small>Gaat direct naar de ICT-beheerder</small>
-            </div>
-            <div class="berichten" id="berichten" role="log" aria-live="polite"></div>
-            <form class="invoer" id="invoer" autocomplete="off">
-                <input type="text" id="tekst" maxlength="500" aria-label="Je antwoord">
-                <button class="knop knop-cta" type="submit" id="verstuur">Verstuur</button>
-            </form>
-        </section>
-
-        <aside class="kaart">
-            <h2>Zo werkt het</h2>
-            <ol class="stappen">
-                <li>Kies waar je probleem over gaat.</li>
-                <li>Beantwoord een paar korte vragen.</li>
-                <li>Je melding gaat meteen naar de ICT-beheerder, die contact met je opneemt.</li>
-            </ol>
-        </aside>
+    <main class="login-wrap">
+        <div class="login-card helpdesk-card">
+            <div class="login-brandline"><span class="brand-dot"></span> Handpicked Access</div>
+            <h1>ICT Helpdesk</h1>
+            <p class="lead">Een paar korte vragen en je melding staat direct bij de ICT-beheerder.</p>
+            <section class="chat" aria-label="Helpdesk-chat">
+                <div class="berichten" id="berichten" role="log" aria-live="polite"></div>
+                <form class="invoer" id="invoer" autocomplete="off">
+                    <input type="text" id="tekst" maxlength="500" aria-label="Je antwoord">
+                    <button class="btn" type="submit" id="verstuur">Verstuur</button>
+                </form>
+            </section>
+        </div>
     </main>
 
     {{ intake|json_script:"intake" }}
+    <script>
+        {% verbatim %}        /* Vier standen in het menu: licht, donker, neon en studio. Welke regel
+           het vinkje krijgt regelt de CSS uit data-theme; JS houdt alleen
+           aria-pressed bij, want dat kan CSS niet. */
+        var THEMES = ['neon', 'studio'];
+
+        function syncThemeMenu() {
+            var cur = document.documentElement.getAttribute('data-theme');
+            if (THEMES.indexOf(cur) === -1) { cur = 'studio'; }
+            var items = document.querySelectorAll('.theme-menu [data-set]');
+            for (var i = 0; i < items.length; i++) {
+                items[i].setAttribute('aria-pressed', items[i].getAttribute('data-set') === cur ? 'true' : 'false');
+            }
+        }
+
+        function setTheme(mode) {
+            var root = document.documentElement;
+            try { localStorage.setItem('theme', mode); }
+            catch (e) { /* localStorage kan geblokkeerd zijn */ }
+            root.setAttribute('data-theme', mode);
+            syncThemeMenu();
+            // Studio heeft een eigen entree; die spelen we meteen af, zodat je
+            // bij het kiezen ziet waar de stand voor staat.
+            if (mode === 'studio') { replayReveal(); }
+            // Het menu staat open zolang er focus in zit; focus weghalen sluit
+            // het dus na een keuze, net zoals wegbewegen met de muis dat doet.
+            if (document.activeElement && document.activeElement.blur) {
+                document.activeElement.blur();
+            }
+        }
+
+        syncThemeMenu();
+
+        /* De entree opnieuw afspelen: alles wat al binnen is gaat er even uit
+           en komt na elkaar weer terug. Gebruikt bij het kiezen van studio.
+
+           De void-regel is geen opvulling: zonder het uitlezen van een maat
+           verwerkt de browser het weghalen en terugzetten van de klasse in een
+           keer, ziet hij alleen de eindtoestand, en speelt de overgang niet af.
+           Dat uitlezen dwingt hem de tussenstand echt te verwerken. */
+        function replayReveal() {
+            var els = document.querySelectorAll('.is-in');
+            if (!els.length) { return; }
+            for (var i = 0; i < els.length; i++) { els[i].classList.remove('is-in'); }
+            void document.body.offsetWidth;
+            for (var i = 0; i < els.length; i++) {
+                (function (el, n) {
+                    setTimeout(function () { el.classList.add('is-in'); }, n * 70);
+                })(els[i], i);
+            }
+        }
+
+        /* Inhoud laten binnenkomen bij het scrollen. De <head> heeft alles al
+           verborgen; hier wordt het weer zichtbaar zodra het in beeld schuift.
+           Elk element wordt na de eerste keer losgelaten, want dit is een
+           binnenkomst en geen effect dat bij elke scroll opnieuw moet spelen.
+           Gaat er onverhoopt iets mis, dan valt de vlag weg en staat alles er
+           gewoon: liever geen animatie dan onzichtbare inhoud. */
+        (function () {
+            var root = document.documentElement;
+            if (root.className.indexOf('js-reveal') === -1) { return; }
+            try {
+                var els = document.querySelectorAll(
+                    '.hero > *, .card, .section, .laptop-block, .login-card');
+                var io = new IntersectionObserver(function (entries) {
+                    for (var i = 0; i < entries.length; i++) {
+                        if (entries[i].isIntersecting) {
+                            entries[i].target.classList.add('is-in');
+                            io.unobserve(entries[i].target);
+                        }
+                    }
+                }, { rootMargin: '0px 0px -6% 0px', threshold: .05 });
+                for (var i = 0; i < els.length; i++) { io.observe(els[i]); }
+            } catch (e) {
+                root.className = root.className.replace(' js-reveal', '');
+            }
+        })();
+            {% endverbatim %}
+    </script>
+
     <script>
         // Alle state bovenaan, zodat niets wordt gebruikt voordat het bestaat.
         const INTAKE = JSON.parse(document.getElementById('intake').textContent);
@@ -192,7 +1907,7 @@
             lijst.forEach(optie => {
                 const knop = document.createElement('button');
                 knop.type = 'button';
-                knop.className = 'optie' + (optie.hoofd ? ' hoofd' : '');
+                knop.className = optie.hoofd ? 'btn' : 'btn-ghost';
                 knop.textContent = optie.label;
                 knop.addEventListener('click', () => {
                     sluitOpties();
@@ -360,5 +2075,6 @@
 
         start();
     </script>
+
 </body>
 </html>
