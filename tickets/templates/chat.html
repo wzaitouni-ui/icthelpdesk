@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>ICT Helpdesk AI</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .chat-box { width: 450px; height: 500px; background: white; border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { background: #007bff; color: white; padding: 15px; font-weight: bold; border-radius: 8px 8px 0 0; }
+        .messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px; border-radius: 6px; max-width: 80%; }
+        .bot { background: #e9ecef; align-self: flex-start; }
+        .user { background: #007bff; color: white; align-self: flex-end; }
+        .input-bar { display: flex; border-top: 1px solid #ddd; }
+        input { flex: 1; border: none; padding: 15px; outline: none; }
+        button { background: #007bff; color: white; border: none; padding: 0 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="chat-box">
+        <div class="header">ICT Helpdesk Assistent</div>
+        <div class="messages" id="chat">
+            <div class="msg bot">Hallo! Waar kan ik je vandaag bij helpen?</div>
+        </div>
+        <div class="input-bar">
+            <input type="text" id="userInput" placeholder="Omschrijf je probleem..." onkeydown="if(event.key==='Enter') verstuurBericht()">
+            <button onclick="verstuurBericht()">Verstuur</button>
+        </div>
+    </div>
+
+    <script>
+        async function verstuurBericht() {
+            const input = document.getElementById('userInput');
+            const tekst = input.value.trim();
+            if (!tekst) return;
+
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<div class="msg user">${tekst}</div>`;
+            input.value = '';
+
+            const res = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bericht: tekst })
+            });
+            const data = await res.json();
+            chat.innerHTML += `<div class="msg bot">${data.antwoord}</div>`;
+            chat.scrollTop = chat.scrollHeight;
+        }
+    </script>
+</body>
+</html>
