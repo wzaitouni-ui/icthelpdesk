@@ -135,3 +135,10 @@ MAILERS = {
     },
 }
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Slack: Incoming Webhook van het IT-beheerkanaal. SLACK_TAG bepaalt wie een notificatie krijgt:
+# 'channel' (iedereen in het kanaal), 'here' (wie online is), een gebruikersgroep-ID (S...)
+# of gebruikers-ID's (U...), gescheiden door komma's. Leeg = niemand taggen.
+SLACK_WEBHOOK_URL = os.environ.get('SLACK_WEBHOOK_URL', '')
+SLACK_TAG = os.environ.get('SLACK_TAG', 'channel')
+

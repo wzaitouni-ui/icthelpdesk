@@ -3,23 +3,28 @@ import json
 from django import forms
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from .kennisbank import BOOM, CATEGORIEEN, TREFWOORDEN
+from .kennisbank import CATEGORIEEN, IMPACT, TREFWOORDEN, VRAGEN
 from .models import Ticket
+from .slack import meld_ticket
 
 
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ["medewerker", "email", "categorie", "prioriteit", "probleem_beschrijving", "doorlopen_stappen"]
+        fields = ["medewerker", "categorie", "prioriteit", "probleem_beschrijving", "doorlopen_stappen"]
 
 
 def chat_pagina(request):
     return render(request, "chat.html", {
-        "kennisbank": {"boom": BOOM, "trefwoorden": TREFWOORDEN},
-        "categorieen": CATEGORIEEN,
-        "prioriteiten": Ticket.Prioriteit.choices,
+        "intake": {
+            "categorieen": CATEGORIEEN,
+            "trefwoorden": TREFWOORDEN,
+            "vragen": VRAGEN,
+            "impact": IMPACT,
+        },
     })
 
 
@@ -36,4 +41,6 @@ def ticket_aanmaken(request):
         return JsonResponse({"fouten": fouten}, status=400)
 
     ticket = form.save()
-    return JsonResponse({"nummer": ticket.nummer, "prioriteit": ticket.get_prioriteit_display()}, status=201)
+    beheer_url = request.build_absolute_uri(reverse("admin:tickets_ticket_change", args=[ticket.pk]))
+    doorgestuurd = meld_ticket(ticket, beheer_url)
+    return JsonResponse({"nummer": ticket.nummer, "doorgestuurd": doorgestuurd}, status=201)
