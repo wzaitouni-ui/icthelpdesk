@@ -4,7 +4,7 @@ import os
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from openai import OpenAI
+import anthropic
 from .models import Ticket
 
 def chat_pagina(request):
@@ -25,15 +25,17 @@ def chat_api(request):
         )
 
         try:
-            client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
+            client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+            response = client.messages.create(
+                model="claude-haiku-5-5",
+                max_tokens=1024,
+                output_config={"effort": "low"},
+                system=systeem_instructie,
                 messages=[
-                    {"role": "system", "content": systeem_instructie},
                     {"role": "user", "content": bericht}
                 ]
             )
-            antwoord = response.choices[0].message.content.strip()
+            antwoord = "".join(b.text for b in response.content if b.type == "text").strip()
 
             if "ESCALATIE" in antwoord:
                 Ticket.objects.create(
