@@ -1,4 +1,5 @@
-import json
+import jsimport os
+on
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -6,7 +7,7 @@ from openai import OpenAI
 from .models import Ticket
 
 # Vul hier tussen de aanhalingstekens je OpenAI API-sleutel in
-client = OpenAI(api_key="JOUW-OPENAI-API-KEY-HIER")
+openai.api_key = "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"
 
 def chat_pagina(request):
     return render(request, "chat.html")
