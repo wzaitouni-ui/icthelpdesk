@@ -1,52 +1,39 @@
 import json
-import os
 
+from django import forms
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-import anthropic
+from django.views.decorators.http import require_POST
+
+from .kennisbank import BOOM, CATEGORIEEN, TREFWOORDEN
 from .models import Ticket
 
+
+class TicketForm(forms.ModelForm):
+    class Meta:
+        model = Ticket
+        fields = ["medewerker", "email", "categorie", "prioriteit", "probleem_beschrijving", "doorlopen_stappen"]
+
+
 def chat_pagina(request):
-    return render(request, "chat.html")
+    return render(request, "chat.html", {
+        "kennisbank": {"boom": BOOM, "trefwoorden": TREFWOORDEN},
+        "categorieen": CATEGORIEEN,
+        "prioriteiten": Ticket.Prioriteit.choices,
+    })
 
-@csrf_exempt
-def chat_api(request):
-    if request.method == "POST":
+
+@require_POST
+def ticket_aanmaken(request):
+    try:
         data = json.loads(request.body)
-        bericht = data.get("bericht", "")
+    except ValueError:
+        return JsonResponse({"fouten": {"__all__": ["Ongeldige aanvraag."]}}, status=400)
 
-        systeem_instructie = (
-            "Je bent een vriendelijke IT-helpdesk assistent. "
-            "Probeer het probleem van de collega in 1 of 2 korte zinnen te verhelpen als het iets simpels is "
-            "(bijvoorbeeld herstarten, kabel controleren, wachtwoord resetten via portaal). "
-            "Als het probleem te ingewikkeld is, hardware kapot is, of rechten vereist, "
-            "antwoord dan exact en alleen met het woord: ESCALATIE"
-        )
+    form = TicketForm(data)
+    if not form.is_valid():
+        fouten = {veld: [str(f) for f in lijst] for veld, lijst in form.errors.items()}
+        return JsonResponse({"fouten": fouten}, status=400)
 
-        try:
-            client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-            response = client.messages.create(
-                model="claude-haiku-5-5",
-                max_tokens=1024,
-                output_config={"effort": "low"},
-                system=systeem_instructie,
-                messages=[
-                    {"role": "user", "content": bericht}
-                ]
-            )
-            antwoord = "".join(b.text for b in response.content if b.type == "text").strip()
-
-            if "ESCALATIE" in antwoord:
-                Ticket.objects.create(
-                    medewerker="Collega",
-                    probleem_beschrijving=bericht,
-                    status="Open - Geëscaleerd naar ICT"
-                )
-                return JsonResponse({"antwoord": "Dit probleem vereist de IT-beheerder. Ik heb direct een ticket aangemaakt!"})
-
-            return JsonResponse({"antwoord": antwoord})
-        except Exception as e:
-            return JsonResponse({"antwoord": f"Fout bij verbinden met AI: {str(e)}"})
-
-    return JsonResponse({"fout": "Alleen POST toegestaan"}, status=400)
+    ticket = form.save()
+    return JsonResponse({"nummer": ticket.nummer, "prioriteit": ticket.get_prioriteit_display()}, status=201)

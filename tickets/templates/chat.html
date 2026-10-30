@@ -2,51 +2,466 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>ICT Helpdesk AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>ICT Helpdesk</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .chat-box { width: 450px; height: 500px; background: white; border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header { background: #007bff; color: white; padding: 15px; font-weight: bold; border-radius: 8px 8px 0 0; }
-        .messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px; border-radius: 6px; max-width: 80%; }
-        .bot { background: #e9ecef; align-self: flex-start; }
-        .user { background: #007bff; color: white; align-self: flex-end; }
-        .input-bar { display: flex; border-top: 1px solid #ddd; }
-        input { flex: 1; border: none; padding: 15px; outline: none; }
-        button { background: #007bff; color: white; border: none; padding: 0 20px; cursor: pointer; }
+        /* Gellix van handpickedagencies.com; de bestandsnamen veranderen soms bij een nieuwe build van die site. */
+        @font-face { font-family: 'Gellix'; src: url('https://www.handpickedagencies.com/_next/static/media/Gellix_Regular-s.p.3blxyezxqnc4u.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+        @font-face { font-family: 'Gellix'; src: url('https://www.handpickedagencies.com/_next/static/media/Gellix_SemiBold-s.p.0kvgscy2y_wb2.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+        @font-face { font-family: 'Gellix'; src: url('https://www.handpickedagencies.com/_next/static/media/Gellix_Bold-s.p.1d53qkh3e_jb7.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+
+        :root {
+            --bg: #274548;
+            --bg-card: #1e3a3e;
+            --bg-card2: #243b3f;
+            --bg-input: #1a3235;
+            --accent: #adff00;
+            --on-accent: #0d2023;
+            --text: #ffffff;
+            --muted: #7a9ea6;
+            --label: #4a7a82;
+            --beige: #e1dbc5;
+            --sky: #9ac2c5;
+            --offblack: #0d2023;
+            --border: rgba(255,255,255,0.12);
+            --fout: #ff6b6b;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Gellix', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        button, input, select, textarea { font: inherit; color: inherit; }
+
+        /* Header */
+        .topbar {
+            position: sticky; top: 0; z-index: 10;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 16px 24px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .merk { display: flex; align-items: center; gap: 14px; color: #ffffff; }
+        .merk svg { height: 22px; width: auto; display: block; }
+        .merk span { color: var(--muted); font-weight: 600; padding-left: 14px; border-left: 1px solid var(--border); }
+
+        /* Knoppen */
+        .knop {
+            border-radius: 100px; padding: 12px 22px; cursor: pointer;
+            font-weight: 700; border: 0; white-space: nowrap;
+        }
+        .knop-cta { background: var(--accent); color: var(--on-accent); }
+        .knop-cta:hover { filter: brightness(1.06); }
+        .knop-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); font-weight: 600; }
+        .knop-ghost:hover { border-color: var(--accent); }
+        .knop:disabled { opacity: .5; cursor: default; }
+        .knop:focus-visible, .optie:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        /* Indeling */
+        .indeling {
+            width: 100%; max-width: 1180px; margin: 0 auto;
+            padding: 24px;
+            display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px;
+        }
+
+        /* Chat */
+        .chat {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+            display: flex; flex-direction: column;
+            height: calc(100vh - 120px); min-height: 480px;
+        }
+        .chat-kop { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        .chat-kop h1 { font-size: 18px; font-weight: 600; margin: 0; }
+        .status-stip { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+        .chat-kop small { color: var(--muted); margin-left: auto; }
+
+        .berichten { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+        .bericht { max-width: 82%; padding: 12px 16px; border-radius: 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .bericht.bot { background: var(--bg-card2); border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 6px; }
+        .bericht.gebruiker { background: var(--accent); color: var(--on-accent); align-self: flex-end; border-bottom-right-radius: 6px; font-weight: 600; }
+        .bericht .stap { display: block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+
+        .opties { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; max-width: 100%; }
+        .optie {
+            background: transparent; border: 1.5px solid var(--border); color: var(--text);
+            border-radius: 100px; padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 15px;
+        }
+        .optie:hover:not(:disabled) { border-color: var(--accent); }
+        .optie.gekozen { border-color: var(--accent); }
+        .optie:disabled { cursor: default; opacity: .45; }
+        .optie.gekozen:disabled { opacity: 1; }
+
+        .invoer { display: flex; gap: 10px; padding: 14px; border-top: 1px solid var(--border); }
+        .invoer input {
+            flex: 1; min-width: 0; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 100px; padding: 12px 18px; outline: none;
+        }
+        .invoer input::placeholder { color: var(--label); }
+        .invoer input:focus { border-color: var(--accent); }
+
+        /* Zijkolom */
+        .zijkolom { display: flex; flex-direction: column; gap: 16px; }
+        .kaart { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+        .kaart h2 { font-size: 16px; font-weight: 600; margin: 0 0 10px; }
+        .kaart p { color: var(--muted); margin: 0 0 14px; font-size: 15px; }
+        .kaart .knop { width: 100%; }
+        .stappen { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; color: var(--muted); font-size: 15px; counter-reset: stap; }
+        .stappen li { display: flex; gap: 10px; }
+        .stappen li::before {
+            counter-increment: stap; content: counter(stap);
+            flex: none; width: 24px; height: 24px; border-radius: 50%;
+            background: var(--bg-card2); border: 1px solid var(--border); color: var(--text);
+            font-size: 13px; font-weight: 600; display: grid; place-items: center;
+        }
+        .prio-lijst { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
+        .prio-lijst b { color: var(--text); font-weight: 600; }
+
+        /* Ticketformulier */
+        dialog {
+            width: min(560px, calc(100% - 32px)); max-height: calc(100% - 32px);
+            background: var(--bg-card); color: var(--text);
+            border: 1px solid var(--border); border-radius: 20px; padding: 0;
+        }
+        dialog::backdrop { background: rgba(13, 32, 35, .75); }
+        .dialoog-kop { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 0; }
+        .dialoog-kop h2 { margin: 0; font-size: 20px; font-weight: 600; }
+        .sluit { background: transparent; border: 0; color: var(--muted); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 8px; }
+        #ticket-form { padding: 16px 24px 24px; display: grid; gap: 14px; }
+        .rij { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        label { display: grid; gap: 6px; font-size: 14px; font-weight: 600; color: var(--muted); }
+        label input, label select, label textarea {
+            background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px;
+            padding: 11px 14px; color: var(--text); outline: none; width: 100%;
+        }
+        label textarea { min-height: 110px; resize: vertical; }
+        label input:focus, label select:focus, label textarea:focus { border-color: var(--accent); }
+        .fout { color: var(--fout); font-size: 13px; font-weight: 400; }
+        .geprobeerd { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 14px; color: var(--muted); }
+        .geprobeerd summary { cursor: pointer; font-weight: 600; color: var(--text); }
+        .geprobeerd ol { margin: 8px 0 0; padding-left: 20px; }
+        #ticket-form .knop-cta { width: 100%; padding: 14px; margin-top: 4px; }
+
+        .bevestiging { padding: 8px 24px 28px; text-align: center; }
+        .bevestiging svg { width: 180px; height: auto; display: block; margin: 0 auto 8px; }
+        .bevestiging h3 { font-size: 22px; font-weight: 600; margin: 0 0 6px; }
+        .bevestiging .nummer { font-size: 40px; font-weight: 700; color: var(--accent); margin: 4px 0 10px; letter-spacing: .02em; }
+        .bevestiging p { color: var(--muted); margin: 0 0 20px; }
+
+        [hidden] { display: none !important; }
+
+        @media (max-width: 900px) {
+            .indeling { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 16px; }
+            .chat { height: calc(100dvh - 104px); }
+            .topbar { padding: 12px 16px; }
+            .topbar .knop { padding: 10px 16px; font-size: 14px; }
+            .merk span { display: none; }
+        }
+        @media (max-width: 520px) {
+            .rij { grid-template-columns: 1fr; }
+            .bericht { max-width: 92%; }
+            .chat-kop small { display: none; }
+        }
     </style>
 </head>
 <body>
-    <div class="chat-box">
-        <div class="header">ICT Helpdesk Assistent</div>
-        <div class="messages" id="chat">
-            <div class="msg bot">Hallo! Waar kan ik je vandaag bij helpen?</div>
-        </div>
-        <div class="input-bar">
-            <input type="text" id="userInput" placeholder="Omschrijf je probleem..." onkeydown="if(event.key==='Enter') verstuurBericht()">
-            <button onclick="verstuurBericht()">Verstuur</button>
-        </div>
-    </div>
+    <header class="topbar">
+        <div class="merk"><svg role="img" aria-label="Handpicked" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 949.19 157.64"><defs><style>
+      .cls-1 {
+        fill: currentColor;
+        stroke-width: 0px;
+      }
+    </style></defs><polygon class="cls-1" points="80.49 52.37 21.78 52.37 21.78 3.08 0 3.08 0 127.76 21.78 127.76 21.78 73.27 80.49 73.27 80.49 127.76 102.27 127.76 102.27 3.08 80.49 3.08 80.49 52.37"/><path class="cls-1" d="m187.87,53.77c-3.08-4.67-7-8.38-11.69-11.04-5.24-2.98-11.4-4.49-18.28-4.49-7.6,0-14.71,2.05-21.13,6.09-6.41,4.04-11.53,9.6-15.2,16.54-3.67,6.93-5.54,14.59-5.54,22.77s1.86,16.01,5.54,22.95c3.68,6.94,8.79,12.51,15.2,16.54,6.42,4.04,13.53,6.09,21.13,6.09,6.89,0,13.04-1.51,18.28-4.49,4.69-2.66,8.61-6.37,11.69-11.04v13.76h20.9V40.01h-20.9v13.76Zm-51.29,29.87c0-4.58,1.13-8.88,3.37-12.78,2.23-3.89,5.34-7.03,9.24-9.33,3.89-2.29,8.25-3.45,12.95-3.45s9.24,1.13,13.13,3.37c3.89,2.23,7,5.34,9.23,9.23,2.23,3.9,3.37,8.25,3.37,12.96s-1.13,9.24-3.37,13.13c-2.23,3.89-5.34,7-9.23,9.23-3.9,2.23-8.31,3.37-13.13,3.37s-9.06-1.16-12.95-3.45c-3.9-2.29-7-5.43-9.24-9.32h0c-2.23-3.89-3.37-8.25-3.37-12.96Z"/><path class="cls-1" d="m273.93,38.25c-5.73,0-10.96,1.36-15.55,4.05-4.03,2.35-7.39,5.64-10,9.79v-12.08h-20.73v87.44h20.73v-47.34c0-6.64,1.91-12,5.67-15.94,3.75-3.92,8.84-5.91,15.12-5.91s10.98,1.99,14.68,5.91c3.7,3.93,5.58,9.3,5.58,15.94v47.34h20.9v-49.81c0-12.09-3.29-21.78-9.77-28.8-6.5-7.03-15.45-10.6-26.63-10.6Z"/><path class="cls-1" d="m394.67,53.77c-3.08-4.67-7-8.38-11.69-11.04-5.24-2.98-11.4-4.49-18.28-4.49-7.6,0-14.71,2.05-21.13,6.09-6.41,4.04-11.53,9.6-15.2,16.54-3.67,6.93-5.54,14.59-5.54,22.77s1.86,16.01,5.54,22.95c3.68,6.94,8.79,12.51,15.2,16.54,6.42,4.04,13.52,6.09,21.13,6.09,6.89,0,13.04-1.51,18.28-4.49,4.69-2.66,8.61-6.37,11.69-11.04v13.76h20.9V2.77h-20.9v51.01Zm-51.29,29.87c0-4.58,1.13-8.88,3.37-12.78,2.24-3.89,5.34-7.03,9.24-9.33,3.89-2.29,8.25-3.45,12.95-3.45s9.24,1.13,13.13,3.37c3.89,2.23,7,5.34,9.23,9.23,2.23,3.9,3.37,8.25,3.37,12.96s-1.13,9.24-3.37,13.13c-2.23,3.89-5.34,7-9.23,9.23-3.9,2.23-8.32,3.37-13.13,3.37s-9.06-1.16-12.95-3.45c-3.9-2.29-7-5.43-9.24-9.32h0c-2.23-3.89-3.37-8.25-3.37-12.96Z"/><path class="cls-1" d="m506.41,44.43c-6.36-4.1-13.44-6.18-21.05-6.18-7.01,0-13.22,1.54-18.46,4.58-4.68,2.71-8.61,6.5-11.68,11.27v-14.08h-20.73v117.63h20.73v-44.26c3.07,4.77,7,8.55,11.68,11.27,5.24,3.04,11.45,4.58,18.46,4.58,7.61,0,14.69-2.05,21.04-6.09,6.35-4.03,11.46-9.6,15.2-16.54,3.73-6.93,5.63-14.6,5.63-22.77s-1.89-15.84-5.63-22.77c-3.73-6.93-8.85-12.53-15.2-16.62Zm-51.19,39.4c0-4.82,1.13-9.24,3.37-13.13,2.24-3.89,5.37-7,9.32-9.23,3.95-2.24,8.4-3.37,13.22-3.37s9.05,1.16,12.95,3.45c3.9,2.3,7.01,5.43,9.24,9.33,2.23,3.9,3.37,8.26,3.37,12.96s-1.13,8.89-3.37,12.78c-2.23,3.89-5.34,7.03-9.24,9.32-3.89,2.29-8.25,3.45-12.95,3.45s-9.27-1.13-13.22-3.37c-3.95-2.23-7.09-5.34-9.32-9.23h0c-2.23-3.89-3.37-8.25-3.37-12.96Z"/><path class="cls-1" d="m551.35,0c-3.55,0-6.66,1.33-9.23,3.97-2.57,2.63-3.87,5.76-3.87,9.31s1.3,6.66,3.87,9.23c2.57,2.57,5.67,3.87,9.23,3.87s6.83-1.3,9.4-3.87c2.57-2.57,3.87-5.67,3.87-9.23s-1.3-6.68-3.87-9.31c-2.57-2.63-5.74-3.97-9.41-3.97Z"/><rect class="cls-1" x="540.9" y="40.07" width="20.73" height="87.44"/><path class="cls-1" d="m607.94,61.94c3.72-2.23,7.92-3.36,12.51-3.36,4.92,0,9.39,1.28,13.28,3.79,3.86,2.5,6.33,5.71,7.35,9.55l.11.42h21.21l-.09-.64c-.84-6.19-3.28-11.9-7.27-16.96-3.98-5.05-9.07-9.05-15.12-11.9-6.05-2.85-12.6-4.29-19.48-4.29-8.42,0-16.15,2.01-22.97,5.99-6.82,3.98-12.3,9.51-16.27,16.45-3.97,6.94-5.99,14.72-5.99,23.14s2.01,16.2,5.99,23.14c3.97,6.94,9.45,12.45,16.27,16.36,6.82,3.91,14.55,5.9,22.96,5.9,6.99,0,13.63-1.44,19.74-4.29,6.12-2.85,11.21-6.92,15.13-12.09,3.93-5.18,6.28-11.06,7-17.49l.07-.63h-21.02l-.11.43c-1.02,4.08-3.52,7.47-7.44,10.08-3.94,2.63-8.44,3.96-13.36,3.96-4.58,0-8.79-1.13-12.51-3.36-3.73-2.23-6.72-5.31-8.89-9.15-2.18-3.84-3.28-8.16-3.28-12.87s1.1-9.06,3.28-12.96c2.18-3.89,5.17-7,8.89-9.23Z"/><polygon class="cls-1" points="756.37 40.32 730.27 40.32 696.13 76.7 696.13 3.08 675.4 3.08 675.4 127.77 696.13 127.77 696.13 87.91 732.02 127.77 759.01 127.77 716.11 82.37 756.37 40.32"/><path class="cls-1" d="m822.79,44.19c-6.47-3.74-13.66-5.64-21.38-5.64-8.3,0-15.97,2.01-22.79,5.99-6.82,3.98-12.29,9.48-16.27,16.36-3.97,6.88-5.99,14.57-5.99,22.88s2.01,16.23,5.99,23.23c3.97,7,9.48,12.57,16.36,16.54,6.87,3.97,14.63,5.99,23.05,5.99,10.78,0,20.04-2.8,27.52-8.32,7.5-5.54,12.09-13.05,13.64-22.34l.11-.66h-20.55l-.09.45c-.79,3.82-3.11,6.97-6.89,9.34-3.83,2.4-8.51,3.62-13.91,3.62-6.89,0-12.7-2.12-17.27-6.29-4.44-4.05-7.2-9.45-8.2-16.05h67.49l.38-7.98c0-7.95-1.93-15.26-5.73-21.73-3.8-6.47-9.01-11.65-15.47-15.38Zm-37.19,16.83c4.17-3.14,9.26-4.74,15.1-4.74s10.46,1.74,14.46,5.16c3.82,3.28,6.11,7.45,6.79,12.42h-44.69c1.53-5.51,4.34-9.82,8.34-12.84Z"/><path class="cls-1" d="m928.29,3.08v51.01c-3.08-4.67-7-8.38-11.69-11.04-5.24-2.98-11.4-4.49-18.28-4.49-7.6,0-14.71,2.05-21.13,6.09-6.41,4.04-11.53,9.6-15.2,16.54-3.67,6.93-5.54,14.59-5.54,22.77s1.86,16.01,5.54,22.95c3.68,6.94,8.79,12.51,15.2,16.54,6.42,4.04,13.52,6.09,21.13,6.09,6.89,0,13.04-1.51,18.28-4.49,4.69-2.66,8.61-6.37,11.69-11.04v13.76h20.9V3.08h-20.9Zm-51.29,80.88c0-4.58,1.13-8.88,3.37-12.78,2.24-3.89,5.34-7.03,9.24-9.33,3.9-2.29,8.25-3.45,12.95-3.45s9.24,1.13,13.13,3.37c3.89,2.23,7,5.34,9.23,9.23,2.23,3.9,3.37,8.26,3.37,12.96s-1.13,9.24-3.37,13.13c-2.23,3.89-5.34,7-9.23,9.23-3.9,2.23-8.31,3.37-13.13,3.37s-9.06-1.16-12.95-3.45c-3.9-2.29-7-5.43-9.24-9.32h0c-2.23-3.89-3.37-8.25-3.37-12.96Z"/></svg><span>ICT Helpdesk</span></div>
+        <button class="knop knop-ghost" type="button" data-open-ticket>Ticket aanmaken</button>
+    </header>
 
+    <main class="indeling">
+        <section class="chat" aria-label="Helpdesk-chat">
+            <div class="chat-kop">
+                <span class="status-stip" aria-hidden="true"></span>
+                <h1>ICT-assistent</h1>
+                <small>Direct antwoord, 24/7</small>
+            </div>
+            <div class="berichten" id="berichten" role="log" aria-live="polite"></div>
+            <form class="invoer" id="invoer" autocomplete="off">
+                <input type="text" id="vraag" placeholder="Beschrijf je probleem, bijv. 'printer print niet'" aria-label="Je vraag">
+                <button class="knop knop-cta" type="submit">Verstuur</button>
+            </form>
+        </section>
+
+        <aside class="zijkolom">
+            <div class="kaart">
+                <h2>Zo werkt het</h2>
+                <ol class="stappen">
+                    <li>Kies een onderwerp of beschrijf je probleem.</li>
+                    <li>Volg de stappen; na elke stap zie je of het opgelost is.</li>
+                    <li>Lukt het niet? Dan maak je met één klik een ticket voor ICT.</li>
+                </ol>
+            </div>
+            <div class="kaart">
+                <h2>Liever direct naar ICT?</h2>
+                <p>Sla de chat over en meld je probleem meteen.</p>
+                <button class="knop knop-cta" type="button" data-open-ticket>Ticket aanmaken</button>
+            </div>
+            <div class="kaart">
+                <h2>Prioriteiten</h2>
+                <ul class="prio-lijst">
+                    <li><b>Kritiek</b>: meerdere collega's kunnen niet werken</li>
+                    <li><b>Hoog</b>: jij kunt niet werken</li>
+                    <li><b>Normaal</b>: lastig, maar je kunt verder</li>
+                    <li><b>Laag</b>: vraag of wens, kan wachten</li>
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <dialog id="ticket-dialoog" aria-labelledby="ticket-titel">
+        <div class="dialoog-kop">
+            <h2 id="ticket-titel">Ticket aanmaken</h2>
+            <button class="sluit" type="button" data-sluit aria-label="Sluiten">&times;</button>
+        </div>
+
+        <form id="ticket-form" novalidate>
+            <div class="rij">
+                <label>Naam
+                    <input name="medewerker" required maxlength="100" autocomplete="name">
+                    <span class="fout" data-fout="medewerker"></span>
+                </label>
+                <label>E-mail (voor updates)
+                    <input name="email" type="email" autocomplete="email">
+                    <span class="fout" data-fout="email"></span>
+                </label>
+            </div>
+            <div class="rij">
+                <label>Onderwerp
+                    <select name="categorie">
+                        {% for waarde, label in categorieen %}<option value="{{ waarde }}">{{ label }}</option>{% endfor %}
+                    </select>
+                    <span class="fout" data-fout="categorie"></span>
+                </label>
+                <label>Prioriteit
+                    <select name="prioriteit">
+                        {% for waarde, label in prioriteiten %}<option value="{{ waarde }}"{% if waarde == "normaal" %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                    <span class="fout" data-fout="prioriteit"></span>
+                </label>
+            </div>
+            <label>Omschrijving
+                <textarea name="probleem_beschrijving" required placeholder="Wat gaat er mis, sinds wanneer, en op welk apparaat?"></textarea>
+                <span class="fout" data-fout="probleem_beschrijving"></span>
+            </label>
+            <details class="geprobeerd" id="geprobeerd" hidden>
+                <summary></summary>
+                <ol></ol>
+            </details>
+            <span class="fout" data-fout="__all__"></span>
+            <button class="knop knop-cta" type="submit">Ticket versturen</button>
+        </form>
+
+        <div class="bevestiging" id="bevestiging" hidden>
+            <svg viewBox="0 0 360 120" aria-hidden="true">
+                <g fill="#e1dbc5">
+                    <circle cx="60" cy="120" r="60"/><circle cx="140" cy="120" r="60"/>
+                    <circle cx="220" cy="120" r="60"/><circle cx="300" cy="120" r="60"/>
+                </g>
+            </svg>
+            <h3>Je ticket is verstuurd</h3>
+            <div class="nummer" id="ticket-nummer"></div>
+            <p id="ticket-uitleg"></p>
+            <button class="knop knop-cta" type="button" data-sluit>Terug naar de chat</button>
+        </div>
+    </dialog>
+
+    {{ kennisbank|json_script:"kennisbank" }}
     <script>
-        async function verstuurBericht() {
-            const input = document.getElementById('userInput');
-            const tekst = input.value.trim();
-            if (!tekst) return;
+        // Alle state bovenaan, zodat niets wordt gebruikt voordat het bestaat.
+        const KENNIS = JSON.parse(document.getElementById('kennisbank').textContent);
+        const BOOM = KENNIS.boom;
+        const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+        const berichten = document.getElementById('berichten');
+        const dialoog = document.getElementById('ticket-dialoog');
+        const ticketForm = document.getElementById('ticket-form');
+        const bevestiging = document.getElementById('bevestiging');
+        let geprobeerd = [];      // doorlopen stappen voor het ticket
+        let laatsteVraag = '';    // wat de medewerker zelf typte
 
-            const chat = document.getElementById('chat');
-            chat.innerHTML += `<div class="msg user">${tekst}</div>`;
-            input.value = '';
-
-            const res = await fetch('/api/chat/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bericht: tekst })
-            });
-            const data = await res.json();
-            chat.innerHTML += `<div class="msg bot">${data.antwoord}</div>`;
-            chat.scrollTop = chat.scrollHeight;
+        function bericht(tekst, wie, stapLabel) {
+            const el = document.createElement('div');
+            el.className = 'bericht ' + wie;
+            if (stapLabel) {
+                const s = document.createElement('span');
+                s.className = 'stap';
+                s.textContent = stapLabel;
+                el.appendChild(s);
+            }
+            el.appendChild(document.createTextNode(tekst));
+            berichten.appendChild(el);
+            berichten.scrollTop = berichten.scrollHeight;
         }
+
+        function opties(lijst, knoop) {
+            const groep = document.createElement('div');
+            groep.className = 'opties';
+            lijst.forEach(optie => {
+                const knop = document.createElement('button');
+                knop.type = 'button';
+                knop.className = 'optie';
+                knop.textContent = optie.label;
+                knop.addEventListener('click', () => {
+                    groep.querySelectorAll('button').forEach(b => b.disabled = true);
+                    knop.classList.add('gekozen');
+                    kies(optie, knoop);
+                });
+                groep.appendChild(knop);
+            });
+            berichten.appendChild(groep);
+            berichten.scrollTop = berichten.scrollHeight;
+        }
+
+        function toon(id) {
+            const knoop = BOOM[id];
+            bericht(knoop.tekst, 'bot', knoop.stap);
+            opties(knoop.opties, knoop);
+        }
+
+        function kies(optie, knoop) {
+            bericht(optie.label, 'gebruiker');
+            if (knoop.categorie) {
+                geprobeerd.push((knoop.stap ? knoop.stap + ': ' : '') + knoop.tekst + ' → ' + optie.label);
+            }
+            if (optie.naar) {
+                toon(optie.naar);
+            } else if (optie.actie === 'opgelost') {
+                bericht('Top, fijn dat het weer werkt! Kan ik je nog ergens anders mee helpen?', 'bot');
+                opties([{ label: 'Nieuwe vraag', naar: 'start' }], {});
+                geprobeerd = [];
+                laatsteVraag = '';
+            } else if (optie.actie === 'ticket') {
+                bericht('Dan schakel ik ICT in. Ik heb een ticket voor je klaargezet met wat je al geprobeerd hebt.', 'bot');
+                openTicket(optie.categorie || knoop.categorie || 'overig', optie.prioriteit || 'normaal');
+            }
+        }
+
+        // Koppel vrije tekst aan een categorie via trefwoorden (begin van een woord).
+        function herken(tekst) {
+            const t = ' ' + tekst.toLowerCase() + ' ';
+            let beste = null, score = 0;
+            for (const [categorie, woorden] of Object.entries(KENNIS.trefwoorden)) {
+                const treffers = woorden.filter(w => {
+                    const i = t.indexOf(w);
+                    return i > 0 && !/[a-z0-9à-ÿ]/.test(t[i - 1]);
+                }).length;
+                if (treffers > score) { beste = categorie; score = treffers; }
+            }
+            return beste;
+        }
+
+        document.getElementById('invoer').addEventListener('submit', e => {
+            e.preventDefault();
+            const veld = document.getElementById('vraag');
+            const tekst = veld.value.trim();
+            if (!tekst) return;
+            veld.value = '';
+            bericht(tekst, 'gebruiker');
+            laatsteVraag = tekst;
+            geprobeerd = [];
+            const categorie = herken(tekst);
+            if (categorie) {
+                const naam = BOOM.start.opties.find(o => o.naar && o.naar.startsWith(categorie)).label;
+                bericht('Dat klinkt als iets met: ' + naam.toLowerCase() + '. Laten we het stap voor stap oplossen.', 'bot');
+                toon(BOOM[categorie] ? categorie : categorie + '_1');
+            } else {
+                bericht('Daar heb ik geen kant-en-klaar stappenplan voor. Kies hieronder een onderwerp, of maak direct een ticket.', 'bot');
+                opties(BOOM.start.opties, {});
+            }
+        });
+
+        // Ticketformulier
+        function bewaard(sleutel) { try { return localStorage.getItem(sleutel) || ''; } catch (e) { return ''; } }
+        function bewaar(sleutel, waarde) { try { localStorage.setItem(sleutel, waarde); } catch (e) {} }
+
+        function openTicket(categorie, prioriteit) {
+            ticketForm.hidden = false;
+            bevestiging.hidden = true;
+            ticketForm.querySelectorAll('[data-fout]').forEach(el => el.textContent = '');
+            ticketForm.medewerker.value = ticketForm.medewerker.value || bewaard('hd-naam');
+            ticketForm.email.value = ticketForm.email.value || bewaard('hd-email');
+            ticketForm.categorie.value = categorie || 'overig';
+            ticketForm.prioriteit.value = prioriteit || 'normaal';
+            ticketForm.probleem_beschrijving.value = laatsteVraag;
+
+            const blok = document.getElementById('geprobeerd');
+            blok.hidden = geprobeerd.length === 0;
+            blok.querySelector('summary').textContent = 'Al geprobeerd in de chat (' + geprobeerd.length + ')';
+            const lijst = blok.querySelector('ol');
+            lijst.replaceChildren(...geprobeerd.map(r => {
+                const li = document.createElement('li');
+                li.textContent = r;
+                return li;
+            }));
+
+            dialoog.showModal();
+            (ticketForm.medewerker.value ? ticketForm.probleem_beschrijving : ticketForm.medewerker).focus();
+        }
+
+        document.querySelectorAll('[data-open-ticket]').forEach(k => k.addEventListener('click', () => {
+            geprobeerd = [];
+            openTicket('overig', 'normaal');
+        }));
+        dialoog.querySelectorAll('[data-sluit]').forEach(k => k.addEventListener('click', () => dialoog.close()));
+
+        ticketForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            ticketForm.querySelectorAll('[data-fout]').forEach(el => el.textContent = '');
+            const knop = ticketForm.querySelector('button[type="submit"]');
+            const data = Object.fromEntries(new FormData(ticketForm));
+            data.doorlopen_stappen = geprobeerd.join('\n');
+
+            knop.disabled = true;
+            knop.textContent = 'Versturen…';
+            try {
+                const res = await fetch('{% url "ticket_aanmaken" %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+                    body: JSON.stringify(data),
+                });
+                const antwoord = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    const fouten = antwoord.fouten || { __all__: ['Er ging iets mis (' + res.status + '). Probeer het opnieuw.'] };
+                    for (const [veld, lijst] of Object.entries(fouten)) {
+                        const el = ticketForm.querySelector('[data-fout="' + veld + '"]') || ticketForm.querySelector('[data-fout="__all__"]');
+                        el.textContent = lijst.join(' ');
+                    }
+                    return;
+                }
+                bewaar('hd-naam', data.medewerker);
+                bewaar('hd-email', data.email);
+                document.getElementById('ticket-nummer').textContent = antwoord.nummer;
+                document.getElementById('ticket-uitleg').textContent =
+                    'Prioriteit: ' + antwoord.prioriteit.split(' - ')[0].toLowerCase() + '. ICT pakt je ticket zo snel mogelijk op' +
+                    (data.email ? ' en houdt je op de hoogte via ' + data.email + '.' : '. Noem dit nummer als je contact opneemt.');
+                ticketForm.hidden = true;
+                bevestiging.hidden = false;
+                bericht('Ticket ' + antwoord.nummer + ' is aangemaakt. ICT gaat ermee aan de slag.', 'bot');
+                opties([{ label: 'Nieuwe vraag', naar: 'start' }], {});
+                geprobeerd = [];
+                laatsteVraag = '';
+                ticketForm.probleem_beschrijving.value = '';
+            } catch (err) {
+                ticketForm.querySelector('[data-fout="__all__"]').textContent = 'Geen verbinding met de server. Controleer je internet en probeer het opnieuw.';
+            } finally {
+                knop.disabled = false;
+                knop.textContent = 'Ticket versturen';
+            }
+        });
+
+        toon('start');
     </script>
 </body>
 </html>
