@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from .kennisbank import CATEGORIEEN, IMPACT, TREFWOORDEN, VRAGEN
+from .kennisbank import CATEGORIEEN, CATEGORIEEN_EN, IMPACT, TREFWOORDEN, VRAGEN
 from .models import Ticket
 from .slack import meld_ticket
 
@@ -21,6 +21,7 @@ def chat_pagina(request):
     return render(request, "chat.html", {
         "intake": {
             "categorieen": CATEGORIEEN,
+            "categorieen_en": CATEGORIEEN_EN,
             "trefwoorden": TREFWOORDEN,
             "vragen": VRAGEN,
             "impact": IMPACT,

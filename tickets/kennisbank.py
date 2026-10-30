@@ -1,9 +1,12 @@
-"""Korte intakevragen voor de helpdesk-chat.
+"""Korte intakevragen voor de helpdesk-chat, in het Nederlands en Engels.
 
 De chat lost niets zelf op: hij stelt per onderwerp een paar meerkeuzevragen
 zodat de ICT-beheerder in één oogopslag ziet waar het om gaat, en stuurt de
 melding daarna door. Een antwoord met "prioriteit" zet de prioriteit direct
 (bijv. een storing voor meerdere collega's) en slaat de impactvraag over.
+
+De medewerker ziet de vragen in zijn eigen taal; het ticket en de Slack-melding
+krijgen altijd de Nederlandse tekst, zodat de beheerder elke melding kan lezen.
 """
 
 CATEGORIEEN = [
@@ -17,58 +20,100 @@ CATEGORIEEN = [
     ("overig", "Iets anders"),
 ]
 
+CATEGORIEEN_EN = {
+    "wifi": "Wi-Fi or internet",
+    "wachtwoord": "Password or login",
+    "printer": "Printer",
+    "vpn": "VPN or working from home",
+    "email": "Email",
+    "laptop": "Laptop or computer",
+    "vergaderen": "Audio or video in meetings",
+    "overig": "Something else",
+}
+
 # Woorden waarmee een vrij getypte melding aan een onderwerp wordt gekoppeld.
 TREFWOORDEN = {
-    "wifi": ["wifi", "wi-fi", "internet", "netwerk", "verbinding", "online", "offline", "router"],
-    "wachtwoord": ["wachtwoord", "password", "inloggen", "login", "geblokkeerd", "vergeten", "account", "2fa", "authenticator", "code"],
-    "printer": ["printer", "printen", "print", "afdrukken", "scannen", "scanner", "papier", "toner"],
-    "vpn": ["vpn", "thuiswerken", "thuis", "op afstand", "remote"],
-    "email": ["mail", "e-mail", "email", "inbox", "outlook", "gmail", "bijlage", "agenda"],
-    "laptop": ["laptop", "computer", "pc", "traag", "langzaam", "vastgelopen", "hangt", "crash", "start niet", "opstarten", "update", "scherm", "toetsenbord"],
-    "vergaderen": ["teams", "meet", "zoom", "camera", "webcam", "microfoon", "geluid", "audio", "headset", "speaker", "vergadering", "beamer"],
+    "wifi": ["wifi", "wi-fi", "internet", "netwerk", "network", "verbinding", "connection", "online", "offline", "router", "wireless"],
+    "wachtwoord": ["wachtwoord", "password", "inloggen", "login", "log in", "sign in", "geblokkeerd", "locked", "vergeten", "forgot", "account", "2fa", "authenticator", "code"],
+    "printer": ["printer", "printen", "print", "afdrukken", "scannen", "scan", "papier", "paper", "toner"],
+    "vpn": ["vpn", "thuiswerken", "thuis", "home", "op afstand", "remote"],
+    "email": ["mail", "e-mail", "email", "inbox", "outlook", "gmail", "bijlage", "attachment", "agenda", "calendar"],
+    "laptop": ["laptop", "computer", "pc", "traag", "langzaam", "slow", "vastgelopen", "frozen", "hangt", "crash", "start niet", "opstarten", "boot", "update", "scherm", "screen", "toetsenbord", "keyboard"],
+    "vergaderen": ["teams", "meet", "zoom", "camera", "webcam", "microfoon", "microphone", "mic", "geluid", "sound", "audio", "headset", "speaker", "vergadering", "meeting", "beamer"],
 }
 
 
-def _opties(*labels):
-    return [{"label": label} for label in labels]
+def _optie(nl, en, prioriteit=None):
+    optie = {"label": nl, "label_en": en}
+    if prioriteit:
+        optie["prioriteit"] = prioriteit
+    return optie
 
 
 VRAGEN = {
     "wifi": [
-        {"vraag": "Heb alleen jij er last van, of collega's ook?", "opties": [
-            {"label": "Alleen ik"},
-            {"label": "Collega's ook", "prioriteit": "kritiek"},
-        ]},
+        {"vraag": "Heb alleen jij er last van, of collega's ook?",
+         "vraag_en": "Is it just you, or are colleagues affected too?",
+         "opties": [
+             _optie("Alleen ik", "Just me"),
+             _optie("Collega's ook", "Colleagues too", prioriteit="kritiek"),
+         ]},
     ],
     "wachtwoord": [
-        {"vraag": "Wat is er aan de hand?", "opties": _opties(
-            "Wachtwoord vergeten", "Account geblokkeerd", "Geen inlogcode (2FA)", "Iets anders")},
+        {"vraag": "Wat is er aan de hand?", "vraag_en": "What's going on?", "opties": [
+            _optie("Wachtwoord vergeten", "Forgot my password"),
+            _optie("Account geblokkeerd", "Account locked"),
+            _optie("Geen inlogcode (2FA)", "No login code (2FA)"),
+            _optie("Iets anders", "Something else"),
+        ]},
     ],
     "printer": [
-        {"vraag": "Wat gebeurt er?", "opties": _opties(
-            "Er komt niets uit", "Papierstoring", "Toner of papier op", "Slechte afdruk", "Scannen lukt niet")},
+        {"vraag": "Wat gebeurt er?", "vraag_en": "What's happening?", "opties": [
+            _optie("Er komt niets uit", "Nothing prints"),
+            _optie("Papierstoring", "Paper jam"),
+            _optie("Toner of papier op", "Out of toner or paper"),
+            _optie("Slechte afdruk", "Poor print quality"),
+            _optie("Scannen lukt niet", "Scanning doesn't work"),
+        ]},
     ],
     "vpn": [
-        {"vraag": "Wat gebeurt er?", "opties": _opties(
-            "Kan niet verbinden", "Verbinding valt steeds weg", "Ik heb nog geen VPN")},
+        {"vraag": "Wat gebeurt er?", "vraag_en": "What's happening?", "opties": [
+            _optie("Kan niet verbinden", "Can't connect"),
+            _optie("Verbinding valt steeds weg", "Connection keeps dropping"),
+            _optie("Ik heb nog geen VPN", "I don't have VPN yet"),
+        ]},
     ],
     "email": [
-        {"vraag": "Wat gaat er mis?", "opties": _opties(
-            "Ik ontvang geen mail", "Ik kan niet versturen", "Mail-app werkt niet", "Agenda of gedeelde mailbox")},
+        {"vraag": "Wat gaat er mis?", "vraag_en": "What's going wrong?", "opties": [
+            _optie("Ik ontvang geen mail", "I'm not receiving email"),
+            _optie("Ik kan niet versturen", "I can't send email"),
+            _optie("Mail-app werkt niet", "Mail app isn't working"),
+            _optie("Agenda of gedeelde mailbox", "Calendar or shared mailbox"),
+        ]},
     ],
     "laptop": [
-        {"vraag": "Wat is er met je laptop?", "opties": _opties(
-            "Traag", "Vastgelopen", "Start niet op", "Schade of gevallen", "Scherm of toetsenbord")},
+        {"vraag": "Wat is er met je laptop?", "vraag_en": "What's wrong with your laptop?", "opties": [
+            _optie("Traag", "Slow"),
+            _optie("Vastgelopen", "Frozen"),
+            _optie("Start niet op", "Won't start"),
+            _optie("Schade of gevallen", "Damaged or dropped"),
+            _optie("Scherm of toetsenbord", "Screen or keyboard"),
+        ]},
     ],
     "vergaderen": [
-        {"vraag": "Wat werkt er niet?", "opties": _opties(
-            "Camera", "Microfoon", "Geluid", "Scherm delen", "Vergaderscherm of beamer")},
+        {"vraag": "Wat werkt er niet?", "vraag_en": "What isn't working?", "opties": [
+            _optie("Camera", "Camera"),
+            _optie("Microfoon", "Microphone"),
+            _optie("Geluid", "Sound"),
+            _optie("Scherm delen", "Screen sharing"),
+            _optie("Vergaderscherm of beamer", "Meeting room screen or projector"),
+        ]},
     ],
     "overig": [],
 }
 
-IMPACT = {"vraag": "Hoe erg is het?", "opties": [
-    {"label": "Ik kan niet werken", "prioriteit": "hoog"},
-    {"label": "Lastig, maar ik kan verder", "prioriteit": "normaal"},
-    {"label": "Kan wachten", "prioriteit": "laag"},
+IMPACT = {"vraag": "Hoe erg is het?", "vraag_en": "How bad is it?", "opties": [
+    _optie("Ik kan niet werken", "I can't work", prioriteit="hoog"),
+    _optie("Lastig, maar ik kan verder", "Annoying, but I can keep working", prioriteit="normaal"),
+    _optie("Kan wachten", "It can wait", prioriteit="laag"),
 ]}

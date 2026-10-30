@@ -1501,30 +1501,45 @@
     
     </style>
     <style>
-        /* ---------- Helpdesk-chat binnen het inlogpaneel ---------- */
-        .helpdesk-card { gap: 12px; }
-        .chat { width: 100%; max-width: 760px; margin: 10px auto 0; display: flex; flex-direction: column; gap: 12px; text-align: left; position: relative; z-index: 1; }
+        /* ---------- Helpdesk: paneel vult bijna het hele scherm ---------- */
+        .login-wrap.helpdesk-wrap { align-items: stretch; padding: clamp(10px, 1.6vw, 22px); }
+        .login-card.helpdesk-card {
+            max-width: min(1440px, 98vw); min-height: 0;
+            height: calc(100vh - 64px - 2 * clamp(10px, 1.6vw, 22px));
+            height: calc(100dvh - 64px - 2 * clamp(10px, 1.6vw, 22px));
+            justify-content: flex-start; gap: 4px;
+            padding: clamp(14px, 1.8vw, 24px) clamp(16px, 2.6vw, 40px);
+        }
+        .helpdesk-card h1 { font-size: clamp(1.6rem, 2.6vw, 2.3rem); }
+        .helpdesk-card .lead { font-size: clamp(1rem, 1.3vw, 1.18rem); max-width: 60ch; }
+        .chat { flex: 1; min-height: 0; width: 100%; margin-top: 8px; display: flex; flex-direction: column; gap: 12px; text-align: left; position: relative; z-index: 1; }
         .berichten {
-            height: clamp(240px, 34vh, 440px); overflow-y: auto;
+            flex: 1; min-height: 0; overflow-y: auto;
             display: flex; flex-direction: column; gap: 10px;
-            padding: 18px; border-radius: var(--r);
+            padding: clamp(14px, 2vw, 26px); border-radius: var(--r);
             background: var(--surface-blur); border: 1px solid var(--hairline);
         }
-        .bericht { max-width: 85%; padding: 11px 16px; border-radius: 20px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; letter-spacing: -.01em; }
+        .bericht { max-width: min(78%, 760px); padding: 12px 17px; border-radius: 20px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; letter-spacing: -.01em; font-size: 1.04rem; }
         .bericht.bot { align-self: flex-start; background: var(--surface); color: var(--text); border: 1px solid var(--hairline); border-bottom-left-radius: 6px; }
         .bericht.gebruiker { align-self: flex-end; background: var(--lime); color: var(--ink); font-weight: 600; border-bottom-right-radius: 6px; }
         :root[data-theme="neon"] .bericht.gebruiker { background: linear-gradient(118deg, var(--neon-cyan) 0%, var(--lime) 54%, #f4ff5a 100%); color: #04121a; }
         .opties { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; }
-        .opties .btn, .opties .btn-ghost { padding: 9px 18px; font-size: .95rem; }
+        .opties .btn, .opties .btn-ghost { padding: 10px 19px; font-size: .98rem; }
         .opties button:disabled { opacity: .4; cursor: default; }
         .opties button.gekozen:disabled { opacity: 1; }
         .invoer { display: flex; gap: 10px; }
-        .invoer input[type="text"] { flex: 1; }
+        .invoer input[type="text"] { flex: 1; font-size: 1.02rem; padding: 14px 18px; }
+        .invoer .btn { padding: 12px 28px; }
         .invoer input:disabled { opacity: .55; }
         .invoer .btn:disabled { opacity: .5; cursor: default; }
         @media (max-width: 600px) {
-            .berichten { height: 52vh; height: 52dvh; padding: 12px; }
+            .topbar .brand { white-space: nowrap; }
+            #opnieuw { display: none; }
+            .login-card.helpdesk-card { padding: 16px 12px; border-radius: var(--r); }
+            .helpdesk-card .lead { display: none; }
+            .berichten { padding: 12px; }
             .bericht { max-width: 92%; }
+            .invoer .btn { padding: 12px 18px; }
         }
     </style>
     {% endverbatim %}
@@ -1770,26 +1785,32 @@
     </div>
 
     <header class="topbar">
-        <a href="/" class="brand"><span class="brand-dot"></span> Handpicked Access</a>
+        <a href="/" class="brand"><span class="brand-dot"></span> Handpicked HelpDesk</a>
         <div class="topbar-actions">
             <button class="lang-btn" type="button" id="opnieuw">Nieuwe melding</button>
             
             <div class="theme"><button class="theme-toggle" type="button" aria-label="Thema kiezen" title="Thema kiezen"><span class="icon-neon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8l1.9 5.1a4 4 0 0 0 2.37 2.37L21.36 11l-5.09 1.9a4 4 0 0 0-2.37 2.37L12 20.36l-1.9-5.09a4 4 0 0 0-2.37-2.37L2.64 11l5.09-1.9A4 4 0 0 0 10.1 6.9L12 1.8zM19.4 15.6l.72 1.93 1.93.72-1.93.72-.72 1.93-.72-1.93-1.93-.72 1.93-.72.72-1.93zM4.6 2.2l.62 1.66 1.66.62-1.66.62L4.6 6.76 3.98 5.1 2.32 4.48l1.66-.62L4.6 2.2z"/></svg></span><span class="icon-studio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"/></svg></span></button><div class="theme-menu" role="group" aria-label="Thema kiezen"><button type="button" aria-pressed="false" data-set="neon" onclick="setTheme('neon')"><span class="tm-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8l1.9 5.1a4 4 0 0 0 2.37 2.37L21.36 11l-5.09 1.9a4 4 0 0 0-2.37 2.37L12 20.36l-1.9-5.09a4 4 0 0 0-2.37-2.37L2.64 11l5.09-1.9A4 4 0 0 0 10.1 6.9L12 1.8zM19.4 15.6l.72 1.93 1.93.72-1.93.72-.72 1.93-.72-1.93-1.93-.72 1.93-.72.72-1.93zM4.6 2.2l.62 1.66 1.66.62-1.66.62L4.6 6.76 3.98 5.1 2.32 4.48l1.66-.62L4.6 2.2z"/></svg></span><span class="tm-label">Neon</span><span class="tm-tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.55 17.6l-4.6-4.6 1.42-1.41 3.18 3.18 8.08-8.08 1.42 1.41z"/></svg></span></button><button type="button" aria-pressed="false" data-set="studio" onclick="setTheme('studio')"><span class="tm-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"/></svg></span><span class="tm-label">Studio</span><span class="tm-tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.55 17.6l-4.6-4.6 1.42-1.41 3.18 3.18 8.08-8.08 1.42 1.41z"/></svg></span></button></div></div>
+            <div class="lang">
+                <button class="lang-btn" type="button"><svg style="width:18px;height:18px;fill:currentColor;vertical-align:middle;margin-right:6px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg> <span id="taal-label">NL</span></button>
+                <div class="lang-menu">
+                    <a href="?lang=nl" data-taal="nl">Nederlands</a>
+                    <a href="?lang=en" data-taal="en">English</a>
+                </div>
+            </div>
             
         </div>
     </header>
     {% endverbatim %}
 
-    <main class="login-wrap">
+    <main class="login-wrap helpdesk-wrap">
         <div class="login-card helpdesk-card">
-            <div class="login-brandline"><span class="brand-dot"></span> Handpicked Access</div>
-            <h1>ICT Helpdesk</h1>
-            <p class="lead">Een paar korte vragen en je melding staat direct bij de ICT-beheerder.</p>
+            <h1 data-tekst="titel">ICT Helpdesk</h1>
+            <p class="lead" data-tekst="lead">Een paar korte vragen en je melding staat direct bij de ICT-beheerder.</p>
             <section class="chat" aria-label="Helpdesk-chat">
                 <div class="berichten" id="berichten" role="log" aria-live="polite"></div>
                 <form class="invoer" id="invoer" autocomplete="off">
                     <input type="text" id="tekst" maxlength="500" aria-label="Je antwoord">
-                    <button class="btn" type="submit" id="verstuur">Verstuur</button>
+                    <button class="btn" type="submit" id="verstuur" data-tekst="verstuur">Verstuur</button>
                 </form>
             </section>
         </div>
@@ -1879,18 +1900,94 @@
     <script>
         // Alle state bovenaan, zodat niets wordt gebruikt voordat het bestaat.
         const INTAKE = JSON.parse(document.getElementById('intake').textContent);
-        const CATEGORIE_LABEL = Object.fromEntries(INTAKE.categorieen);
-        const PRIORITEIT_LABEL = { kritiek: 'Kritiek', hoog: 'Hoog', normaal: 'Normaal', laag: 'Laag' };
+        const CATEGORIE_NL = Object.fromEntries(INTAKE.categorieen);
         const CSRF = document.querySelector('meta[name="csrf-token"]').content;
         const berichten = document.getElementById('berichten');
         const tekstVeld = document.getElementById('tekst');
         const verstuurKnop = document.getElementById('verstuur');
+        let taal = 'nl';
         let melding;          // wat we tot nu toe weten
         let wachtOp = null;   // welke getypte invoer we verwachten: 'onderwerp', 'omschrijving' of 'naam'
         let openOpties = null;
 
+        // Teksten van de pagina. Wat naar ICT gaat blijft altijd Nederlands.
+        const TEKST = {
+            nl: {
+                paginatitel: 'ICT Helpdesk - Handpicked',
+                titel: 'ICT Helpdesk',
+                lead: 'Een paar korte vragen en je melding staat direct bij de ICT-beheerder.',
+                verstuur: 'Verstuur',
+                nieuw: 'Nieuwe melding',
+                antwoordLabel: 'Je antwoord',
+                kiesHierboven: 'Kies hierboven een antwoord',
+                welkom: 'Hoi! Ik zet je melding direct door naar de ICT-beheerder. Waar gaat het over? Kies een onderwerp of typ het kort.',
+                typKort: "Of typ het kort, bijv. 'printer doet niks'",
+                herkend: 'Duidelijk, het gaat over: ',
+                overigVraag: 'Wat is er aan de hand? Beschrijf het in één zin.',
+                toelichtingVraag: 'Wil je in één zin zeggen wat er gebeurt? Bijvoorbeeld welke printer of welke foutmelding.',
+                overslaan: 'Overslaan',
+                toelichtingPh: 'Typ je toelichting',
+                naamVraag: 'Op welke naam mag de melding?',
+                andereNaam: 'Andere naam',
+                watIsNaam: 'Wat is je naam?',
+                naamPh: 'Je naam',
+                samenvatting: 'Dit stuur ik naar ICT:',
+                onderwerp: 'Onderwerp',
+                prioriteit: 'Prioriteit',
+                toelichting: 'Toelichting',
+                naam: 'Naam',
+                versturen: 'Versturen',
+                opnieuwBeginnen: 'Opnieuw beginnen',
+                bezig: 'Even versturen…',
+                doorgestuurd: n => 'Je melding ' + n + ' is doorgestuurd naar de ICT-beheerder. Je hoort zo snel mogelijk van ze.',
+                opgeslagen: n => 'Je melding ' + n + ' is opgeslagen. ICT bekijkt hem zo snel mogelijk.',
+                mislukt: f => 'Versturen lukte niet (' + f + ').',
+                opnieuwProberen: 'Opnieuw proberen',
+                prio: { kritiek: 'Kritiek', hoog: 'Hoog', normaal: 'Normaal', laag: 'Laag' },
+            },
+            en: {
+                paginatitel: 'IT Helpdesk - Handpicked',
+                titel: 'IT Helpdesk',
+                lead: 'Answer a few short questions and your report goes straight to the IT administrator.',
+                verstuur: 'Send',
+                nieuw: 'New report',
+                antwoordLabel: 'Your answer',
+                kiesHierboven: 'Pick an answer above',
+                welkom: "Hi! I'll pass your report straight to the IT administrator. What's it about? Pick a topic or type it briefly.",
+                typKort: "Or type it briefly, e.g. 'printer not working'",
+                herkend: 'Got it, this is about: ',
+                overigVraag: "What's going on? Describe it in one sentence.",
+                toelichtingVraag: 'Can you describe what happens in one sentence? For example which printer or which error message.',
+                overslaan: 'Skip',
+                toelichtingPh: 'Type your explanation',
+                naamVraag: 'What name should the report be under?',
+                andereNaam: 'Different name',
+                watIsNaam: "What's your name?",
+                naamPh: 'Your name',
+                samenvatting: "This is what I'll send to IT:",
+                onderwerp: 'Topic',
+                prioriteit: 'Priority',
+                toelichting: 'Details',
+                naam: 'Name',
+                versturen: 'Send',
+                opnieuwBeginnen: 'Start over',
+                bezig: 'Sending…',
+                doorgestuurd: n => 'Your report ' + n + ' has been sent to the IT administrator. You will hear from them as soon as possible.',
+                opgeslagen: n => 'Your report ' + n + ' has been saved. IT will look at it as soon as possible.',
+                mislukt: f => 'Sending failed (' + f + ').',
+                opnieuwProberen: 'Try again',
+                prio: { kritiek: 'Critical', hoog: 'High', normaal: 'Normal', laag: 'Low' },
+            },
+        };
+
+        function t(sleutel) { return TEKST[taal][sleutel]; }
+        function categorie(code) { return taal === 'en' ? INTAKE.categorieen_en[code] : CATEGORIE_NL[code]; }
+        function label(optie) { return taal === 'en' && optie.label_en ? optie.label_en : optie.label; }
+        function vraag(v) { return taal === 'en' ? v.vraag_en : v.vraag; }
+
         function nieuweMelding() {
-            return { categorie: null, vraagIndex: 0, antwoorden: [], prioriteit: null, omschrijving: null, naam: null };
+            // antwoorden: Nederlands, voor het ticket. weergave: in de taal van de medewerker.
+            return { categorie: null, vraagIndex: 0, antwoorden: [], weergave: [], prioriteit: null, omschrijving: null, naam: null };
         }
 
         function bericht(tekst, wie) {
@@ -1908,11 +2005,11 @@
                 const knop = document.createElement('button');
                 knop.type = 'button';
                 knop.className = optie.hoofd ? 'btn' : 'btn-ghost';
-                knop.textContent = optie.label;
+                knop.textContent = label(optie);
                 knop.addEventListener('click', () => {
                     sluitOpties();
                     knop.classList.add('gekozen');
-                    bericht(optie.label, 'gebruiker');
+                    bericht(label(optie), 'gebruiker');
                     bijKeuze(optie);
                 });
                 groep.appendChild(knop);
@@ -1930,12 +2027,12 @@
         function verwachtTekst(soort, placeholder) {
             wachtOp = soort;
             tekstVeld.disabled = verstuurKnop.disabled = !soort;
-            tekstVeld.placeholder = placeholder || 'Kies hierboven een antwoord';
+            tekstVeld.placeholder = placeholder || t('kiesHierboven');
             if (soort) tekstVeld.focus({ preventScroll: true });
         }
 
-        function bewaard() { try { return localStorage.getItem('hd-naam') || ''; } catch (e) { return ''; } }
-        function bewaar(naam) { try { localStorage.setItem('hd-naam', naam); } catch (e) {} }
+        function bewaard(sleutel) { try { return localStorage.getItem(sleutel) || ''; } catch (e) { return ''; } }
+        function bewaar(sleutel, waarde) { try { localStorage.setItem(sleutel, waarde); } catch (e) {} }
 
         // Bepaalt steeds de volgende vraag op basis van wat we al weten.
         function volgende() {
@@ -1943,55 +2040,56 @@
             const vragen = INTAKE.vragen[m.categorie] || [];
 
             if (!m.categorie) {
-                bericht('Hoi! Ik zet je melding direct door naar de ICT-beheerder. Waar gaat het over? Kies een onderwerp of typ het kort.', 'bot');
-                opties(INTAKE.categorieen.map(([code, label]) => ({ label, code })), o => { m.categorie = o.code; volgende(); });
-                verwachtTekst('onderwerp', "Of typ het kort, bijv. 'printer doet niks'");
+                bericht(t('welkom'), 'bot');
+                opties(INTAKE.categorieen.map(([code]) => ({ label: categorie(code), code })), o => { m.categorie = o.code; volgende(); });
+                verwachtTekst('onderwerp', t('typKort'));
             } else if (m.vraagIndex < vragen.length) {
                 const v = vragen[m.vraagIndex];
-                bericht(v.vraag, 'bot');
+                bericht(vraag(v), 'bot');
                 opties(v.opties, o => {
                     m.antwoorden.push(v.vraag + ' ' + o.label);
+                    m.weergave.push(vraag(v) + ' ' + label(o));
                     if (o.prioriteit) m.prioriteit = o.prioriteit;
                     m.vraagIndex++;
                     volgende();
                 });
                 verwachtTekst(null);
             } else if (!m.prioriteit) {
-                bericht(INTAKE.impact.vraag, 'bot');
+                bericht(vraag(INTAKE.impact), 'bot');
                 opties(INTAKE.impact.opties, o => { m.prioriteit = o.prioriteit; volgende(); });
                 verwachtTekst(null);
             } else if (m.omschrijving === null) {
                 if (m.categorie === 'overig') {
-                    bericht('Wat is er aan de hand? Beschrijf het in één zin.', 'bot');
+                    bericht(t('overigVraag'), 'bot');
                 } else {
-                    bericht('Wil je in één zin zeggen wat er gebeurt? Bijvoorbeeld welke printer of welke foutmelding.', 'bot');
-                    opties([{ label: 'Overslaan' }], () => { m.omschrijving = ''; volgende(); });
+                    bericht(t('toelichtingVraag'), 'bot');
+                    opties([{ label: t('overslaan') }], () => { m.omschrijving = ''; volgende(); });
                 }
-                verwachtTekst('omschrijving', 'Typ je toelichting');
+                verwachtTekst('omschrijving', t('toelichtingPh'));
             } else if (!m.naam) {
-                const naam = bewaard();
-                bericht('Op welke naam mag de melding?', 'bot');
+                const naam = bewaard('hd-naam');
+                bericht(t('naamVraag'), 'bot');
                 if (naam) {
-                    opties([{ label: naam, hoofd: true }, { label: 'Andere naam' }], o => {
-                        if (o.label === naam) { m.naam = naam; volgende(); }
-                        else { bericht('Wat is je naam?', 'bot'); verwachtTekst('naam', 'Je naam'); }
+                    opties([{ label: naam, hoofd: true, actie: 'bewaard' }, { label: t('andereNaam') }], o => {
+                        if (o.actie === 'bewaard') { m.naam = naam; volgende(); }
+                        else { bericht(t('watIsNaam'), 'bot'); verwachtTekst('naam', t('naamPh')); }
                     });
                     verwachtTekst(null);
                 } else {
-                    verwachtTekst('naam', 'Je naam');
+                    verwachtTekst('naam', t('naamPh'));
                 }
             } else {
                 const regels = [
-                    'Dit stuur ik naar ICT:',
-                    'Onderwerp: ' + CATEGORIE_LABEL[m.categorie],
-                    'Prioriteit: ' + PRIORITEIT_LABEL[m.prioriteit],
-                    ...m.antwoorden,
+                    t('samenvatting'),
+                    t('onderwerp') + ': ' + categorie(m.categorie),
+                    t('prioriteit') + ': ' + t('prio')[m.prioriteit],
+                    ...m.weergave,
                 ];
-                if (m.omschrijving) regels.push('Toelichting: ' + m.omschrijving);
-                regels.push('Naam: ' + m.naam);
+                if (m.omschrijving) regels.push(t('toelichting') + ': ' + m.omschrijving);
+                regels.push(t('naam') + ': ' + m.naam);
                 bericht(regels.join('\n'), 'bot');
-                opties([{ label: 'Versturen', hoofd: true }, { label: 'Opnieuw beginnen' }], o => {
-                    if (o.label === 'Versturen') versturen(); else start();
+                opties([{ label: t('versturen'), hoofd: true, actie: 'versturen' }, { label: t('opnieuwBeginnen') }], o => {
+                    if (o.actie === 'versturen') versturen(); else start();
                 });
                 verwachtTekst(null);
             }
@@ -1999,14 +2097,14 @@
 
         // Koppel vrije tekst aan een onderwerp via trefwoorden (begin van een woord).
         function herken(tekst) {
-            const t = ' ' + tekst.toLowerCase() + ' ';
+            const tk = ' ' + tekst.toLowerCase() + ' ';
             let beste = null, score = 0;
-            for (const [categorie, woorden] of Object.entries(INTAKE.trefwoorden)) {
+            for (const [code, woorden] of Object.entries(INTAKE.trefwoorden)) {
                 const treffers = woorden.filter(w => {
-                    const i = t.indexOf(w);
-                    return i > 0 && !/[a-z0-9à-ÿ]/.test(t[i - 1]);
+                    const i = tk.indexOf(w);
+                    return i > 0 && !/[a-z0-9à-ÿ]/.test(tk[i - 1]);
                 }).length;
-                if (treffers > score) { beste = categorie; score = treffers; }
+                if (treffers > score) { beste = code; score = treffers; }
             }
             return beste;
         }
@@ -2023,13 +2121,13 @@
                 melding.categorie = herken(tekst) || 'overig';
                 melding.omschrijving = tekst;
                 if (melding.categorie !== 'overig') {
-                    bericht('Duidelijk, het gaat over: ' + CATEGORIE_LABEL[melding.categorie].toLowerCase() + '.', 'bot');
+                    bericht(t('herkend') + categorie(melding.categorie).toLowerCase() + '.', 'bot');
                 }
             } else if (wachtOp === 'omschrijving') {
                 melding.omschrijving = tekst;
             } else if (wachtOp === 'naam') {
                 melding.naam = tekst.slice(0, 100);
-                bewaar(melding.naam);
+                bewaar('hd-naam', melding.naam);
             }
             volgende();
         });
@@ -2041,10 +2139,10 @@
                 medewerker: m.naam,
                 categorie: m.categorie,
                 prioriteit: m.prioriteit,
-                probleem_beschrijving: m.omschrijving || CATEGORIE_LABEL[m.categorie] + (korteAntwoorden ? ': ' + korteAntwoorden : ''),
+                probleem_beschrijving: m.omschrijving || CATEGORIE_NL[m.categorie] + (korteAntwoorden ? ': ' + korteAntwoorden : ''),
                 doorlopen_stappen: m.antwoorden.join('\n'),
             };
-            bericht('Even versturen…', 'bot');
+            bericht(t('bezig'), 'bot');
             try {
                 const res = await fetch('{% url "ticket_aanmaken" %}', {
                     method: 'POST',
@@ -2052,28 +2150,42 @@
                     body: JSON.stringify(data),
                 });
                 const antwoord = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(Object.values(antwoord.fouten || {}).flat().join(' ') || 'foutcode ' + res.status);
-                bericht(antwoord.doorgestuurd
-                    ? 'Je melding ' + antwoord.nummer + ' is doorgestuurd naar de ICT-beheerder. Je hoort zo snel mogelijk van ze.'
-                    : 'Je melding ' + antwoord.nummer + ' is opgeslagen. ICT bekijkt hem zo snel mogelijk.', 'bot');
-                opties([{ label: 'Nieuwe melding' }], start);
+                if (!res.ok) throw new Error(Object.values(antwoord.fouten || {}).flat().join(' ') || 'HTTP ' + res.status);
+                bericht(antwoord.doorgestuurd ? t('doorgestuurd')(antwoord.nummer) : t('opgeslagen')(antwoord.nummer), 'bot');
+                opties([{ label: t('nieuw') }], start);
             } catch (err) {
-                bericht('Versturen lukte niet (' + err.message + ').', 'bot');
-                opties([{ label: 'Opnieuw proberen', hoofd: true }], versturen);
+                bericht(t('mislukt')(err.message), 'bot');
+                opties([{ label: t('opnieuwProberen'), hoofd: true }], versturen);
             }
         }
 
         function start() {
+            berichten.replaceChildren();
             melding = nieuweMelding();
             volgende();
         }
 
-        document.getElementById('opnieuw').addEventListener('click', () => {
-            berichten.replaceChildren();
+        // Taal wisselen: vaste teksten bijwerken en het gesprek opnieuw beginnen in de nieuwe taal.
+        function zetTaal(code) {
+            taal = TEKST[code] ? code : 'nl';
+            bewaar('hd-taal', taal);
+            document.documentElement.lang = taal;
+            document.title = t('paginatitel');
+            document.querySelectorAll('[data-tekst]').forEach(el => { el.textContent = t(el.dataset.tekst); });
+            document.getElementById('opnieuw').textContent = t('nieuw');
+            document.getElementById('taal-label').textContent = taal.toUpperCase();
+            tekstVeld.setAttribute('aria-label', t('antwoordLabel'));
             start();
-        });
+        }
 
-        start();
+        document.querySelectorAll('[data-taal]').forEach(a => a.addEventListener('click', e => {
+            e.preventDefault();
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            zetTaal(a.dataset.taal);
+        }));
+        document.getElementById('opnieuw').addEventListener('click', start);
+
+        zetTaal(new URLSearchParams(location.search).get('lang') || bewaard('hd-taal') || 'nl');
     </script>
 
 </body>

@@ -5,7 +5,7 @@ from unittest import mock
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from .kennisbank import CATEGORIEEN, IMPACT, TREFWOORDEN, VRAGEN
+from .kennisbank import CATEGORIEEN, CATEGORIEEN_EN, IMPACT, TREFWOORDEN, VRAGEN
 from .models import Ticket
 from .slack import bericht_voor
 
@@ -18,6 +18,14 @@ class IntakeTests(TestCase):
     def test_elke_categorie_heeft_vragen(self):
         self.assertEqual(set(VRAGEN), CATEGORIE_CODES)
         self.assertTrue(set(TREFWOORDEN) <= CATEGORIE_CODES)
+
+    def test_alles_is_ook_in_het_engels(self):
+        self.assertEqual(set(CATEGORIEEN_EN), CATEGORIE_CODES)
+        vragen = [v for lijst in VRAGEN.values() for v in lijst] + [IMPACT]
+        for vraag in vragen:
+            self.assertTrue(vraag.get("vraag_en"), vraag["vraag"])
+            for optie in vraag["opties"]:
+                self.assertTrue(optie.get("label_en"), optie["label"])
 
     def test_prioriteiten_zijn_geldig(self):
         opties = [o for vragen in VRAGEN.values() for v in vragen for o in v["opties"]] + IMPACT["opties"]
